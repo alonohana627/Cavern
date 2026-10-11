@@ -9,6 +9,7 @@ In `~/.claude/skills/` (checked 2026-10-11):
 
 - action-combat-frame-data
 - action-rpg-progression-design
+- anime-style-shader-art
 - arcade-action-physics
 - articulated-2d-character-rigs
 - chiptune-music-sequencing
@@ -37,6 +38,7 @@ In `~/.claude/skills/` (checked 2026-10-11):
 - input-rebinding-ui
 - learning-mentor
 - logic-puzzle-demo-players
+- maplestory-style-art-direction
 - metroidvania-world-design
 - platformer-boss-design
 - platformer-controller-feel
