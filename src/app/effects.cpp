@@ -16,6 +16,21 @@ using gamelib::core::Rect;
 using gamelib::core::Vec2;
 using game::EventKind;
 
+gamelib::fx::AmbientStyle _moteStyle(const game::Area area)
+{
+    switch (area) {
+    case game::Area::Ruins: return {.rate = 3.0f, .speedX = {8.0f, 20.0f}, .speedY = {-2.0f, 2.0f}, .size = {0.6f, 1.2f}};
+    case game::Area::Fungal: return {.rate = 9.0f};
+    case game::Area::Flooded:
+        return {.rate = 9.0f, .speedX = {0.0f, 0.0f}, .speedY = {20.0f, 20.0f}, .life = {1.6f, 1.6f}, .size = {0.8f, 1.2f},
+                .gravity = 260.0f, .band = {0.0f, 0.3f}};
+    case game::Area::Crystal:
+        return {.rate = 9.0f, .speedX = {-2.0f, 2.0f}, .speedY = {-3.0f, 3.0f}, .life = {1.5f, 3.5f}, .size = {0.7f, 1.4f}};
+    case game::Area::Core:
+    case game::Area::Count: break;
+    }
+    return {.rate = 9.0f, .speedX = {-6.0f, 6.0f}, .speedY = {-28.0f, -10.0f}, .life = {1.5f, 3.0f}, .size = {0.6f, 1.3f}};
+}
 
 } // namespace
 
@@ -146,85 +161,32 @@ void Effects::update(const float seconds, const game::Session& session, const Re
     m_rings.update(seconds);
     m_shake.update(seconds);
     m_flash.update(seconds);
-    // Ambient motes: spores drift up in the fungal caves, drips fall in the
-    // flooded halls, glints hang in the crystal depths, embers rise in the core.
-    for (Mote& m : m_motes) {
-        m.age += seconds;
-        m.at += m.velocity * seconds;
-        if (m.kind == 1) {
-            m.velocity.y += 260.0f * seconds;
-        }
-    }
-    std::erase_if(m_motes, [&](const Mote& m) { return m.age >= m.life || !visible.expanded(40.0f).contains(m.at); });
-    const game::Area area = session.area();
-    const float rate = area == game::Area::Ruins ? 3.0f : 9.0f;
-    m_spawn += seconds * rate;
-    while (m_spawn >= 1.0f && m_motes.size() < 90) {
-        m_spawn -= 1.0f;
-        Mote m;
-        m.at = {visible.x + m_rng.uniform(0.0f, visible.width), visible.y + m_rng.uniform(0.0f, visible.height)};
-        m.age = 0.0f;
-        switch (area) {
-        case game::Area::Ruins:
-            m.kind = 4;
-            m.velocity = {m_rng.uniform(8.0f, 20.0f), m_rng.uniform(-2.0f, 2.0f)};
-            m.life = m_rng.uniform(3.0f, 6.0f);
-            m.size = m_rng.uniform(0.6f, 1.2f);
-            break;
-        case game::Area::Fungal:
-            m.kind = 0;
-            m.velocity = {m_rng.uniform(-4.0f, 4.0f), m_rng.uniform(-10.0f, -4.0f)};
-            m.life = m_rng.uniform(3.0f, 6.0f);
-            m.size = m_rng.uniform(0.8f, 1.6f);
-            break;
-        case game::Area::Flooded: {
-            // Drips fall from the ceiling of the view.
-            m.kind = 1;
-            m.at.y = visible.y + m_rng.uniform(0.0f, visible.height * 0.3f);
-            m.velocity = {0.0f, 20.0f};
-            m.life = 1.6f;
-            m.size = m_rng.uniform(0.8f, 1.2f);
-            break;
-        }
-        case game::Area::Crystal:
-            m.kind = 3;
-            m.velocity = {m_rng.uniform(-2.0f, 2.0f), m_rng.uniform(-3.0f, 3.0f)};
-            m.life = m_rng.uniform(1.5f, 3.5f);
-            m.size = m_rng.uniform(0.7f, 1.4f);
-            break;
-        case game::Area::Core:
-        case game::Area::Count:
-            m.kind = 2;
-            m.velocity = {m_rng.uniform(-6.0f, 6.0f), m_rng.uniform(-28.0f, -10.0f)};
-            m.life = m_rng.uniform(1.5f, 3.0f);
-            m.size = m_rng.uniform(0.6f, 1.3f);
-            break;
-        }
-        m_motes.push_back(m);
-    }
+    // Ambient motes (GameLib's Ambient): dust in the ruins, spores drifting
+    // up in the fungal caves, drips from the flooded ceilings, glints in the
+    // crystal depths, embers rising in the core.
+    m_motes.setStyle(_moteStyle(session.area()));
+    m_motes.update(seconds, visible);
 }
 
 void Effects::drawAmbient(gamelib::draw::DrawList& list, const game::Area area, const float time) const
 {
     const AreaPalette& pal = areaPalette(area);
-    for (const Mote& m : m_motes) {
-        const float t = m.age / m.life;
-        const float fade = std::min(1.0f, std::min(t * 4.0f, (1.0f - t) * 3.0f));
-        Color c = pal[Role::Accent];
-        switch (m.kind) {
-        case 1: c = pal[Role::Water].scaled(2.2f); break;
-        case 3: c = (std::sin(time * 6.0f + m.at.x) > 0.0f ? pal[Role::Accent] : pal[Role::Accent2]).scaled(1.4f); break;
-        case 4: c = pal[Role::RockEdge]; break;
-        default: break;
-        }
-        if (m.kind == 1) {
-            list.box(Rect::fromCenter(m.at, {m.size * 0.7f, m.size * 2.4f}), c.withAlpha(0.7f * fade), {.cornerRadius = 0.5f});
-        } else {
-            list.circle(m.at, m.size, c.withAlpha(0.8f * fade), {.glowWidth = m.size * 2.0f, .glowColor = c.withAlpha(0.3f * fade)});
-        }
+    switch (area) {
+    case game::Area::Ruins: m_motes.draw(list, {.color = pal[Role::RockEdge].withAlpha(0.8f), .glowAlpha = 0.3f}); break;
+    case game::Area::Flooded:
+        m_motes.draw(list, {.color = pal[Role::Water].scaled(2.2f).withAlpha(0.7f), .glow = 0.0f, .stretch = 3.0f});
+        break;
+    case game::Area::Crystal: {
+        // Glints twinkle between the area's two accents.
+        const Color c = (std::sin(time * 6.0f) > 0.0f ? pal[Role::Accent] : pal[Role::Accent2]).scaled(1.4f);
+        m_motes.draw(list, {.color = c.withAlpha(0.8f), .glowAlpha = 0.3f});
+        break;
+    }
+    case game::Area::Fungal:
+    case game::Area::Core:
+    case game::Area::Count: m_motes.draw(list, {.color = pal[Role::Accent].withAlpha(0.8f), .glowAlpha = 0.3f}); break;
     }
 }
-
 void Effects::drawWorld(gamelib::draw::DrawList& list) const
 {
     m_dust.draw(list);

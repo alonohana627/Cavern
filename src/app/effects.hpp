@@ -7,13 +7,11 @@
 
 #include "session.hpp"
 
-#include <gamelib/core/rng.hpp>
 #include <gamelib/draw/draw_list.hpp>
+#include <gamelib/fx/ambient.hpp>
 #include <gamelib/fx/juice.hpp>
 #include <gamelib/fx/particles.hpp>
 #include <gamelib/fx/puffs.hpp>
-
-#include <vector>
 
 namespace cavern::app {
 
@@ -34,15 +32,6 @@ public:
     [[nodiscard]] gamelib::core::Color flashColor() const { return m_flashColor; }
 
 private:
-    struct Mote {
-        gamelib::core::Vec2 at;
-        gamelib::core::Vec2 velocity;
-        float life = 0.0f;
-        float age = 0.0f;
-        float size = 1.0f;
-        int kind = 0; // 0 spore, 1 drip, 2 ember, 3 glint, 4 dust
-    };
-
     void burst(gamelib::core::Vec2 at, int count, gamelib::core::Color color, float speed, float size);
 
     gamelib::fx::Particles m_shards;
@@ -52,9 +41,7 @@ private:
     gamelib::fx::Shake m_shake{0.35f, 18.0f};
     gamelib::fx::Fade m_flash{0.35f};
     gamelib::core::Color m_flashColor{1.0f, 1.0f, 1.0f, 1.0f};
-    std::vector<Mote> m_motes;
-    gamelib::core::Rng m_rng{0x5EED};
-    float m_spawn = 0.0f;
+    gamelib::fx::Ambient m_motes{{}, 0x5EED};
 };
 
 } // namespace cavern::app

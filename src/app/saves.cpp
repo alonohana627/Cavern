@@ -2,6 +2,7 @@
 
 #include "profile.hpp"
 
+#include <gamelib/app/world_file.hpp>
 #include <gamelib/core/timers.hpp>
 #include <gamelib/storage/files.hpp>
 
@@ -31,8 +32,8 @@ gamelib::storage::IniFile _write(const game::Progress& p)
     ini.setInt("run", "ticks", p.ticks);
     ini.setInt("run", "deaths", p.deaths);
     ini.setBool("run", "finished", p.finished);
-    ini.set("map", "fog", p.reveal.encode());
-    p.flags.forEach("", [&](const std::string_view name, const std::int64_t value) { ini.setInt("flags", name, value); });
+    gamelib::app::writeMapReveal(p.reveal, ini, "map", "fog");
+    gamelib::app::writeWorldFlags(p.flags, ini, "flags");
     return ini;
 }
 
@@ -50,20 +51,8 @@ game::Progress _read(const gamelib::storage::IniFile& ini)
     p.ticks = std::max<long long>(0, ini.getInt("run", "ticks").value_or(0));
     p.deaths = ini.getInt("run", "deaths", 0, 1'000'000).value_or(0);
     p.finished = ini.getBool("run", "finished").value_or(false);
-    if (const auto fog = ini.get("map", "fog")) {
-        if (auto reveal = gamelib::core::MapReveal::decode(*fog);
-            reveal && reveal->width() == p.reveal.width() && reveal->height() == p.reveal.height()) {
-            p.reveal = *reveal;
-        }
-    }
-    for (const auto& [name, value] : ini.entries("flags")) {
-        if (!gamelib::core::WorldFlags::isValidName(name)) {
-            continue;
-        }
-        if (const auto v = gamelib::storage::parseInt(value)) {
-            p.flags.set(name, *v);
-        }
-    }
+    p.reveal = gamelib::app::readMapReveal(ini, "map", "fog", p.reveal.width(), p.reveal.height()).value_or(p.reveal);
+    p.flags = gamelib::app::readWorldFlags(ini, "flags");
     return p;
 }
 
@@ -87,10 +76,14 @@ Saves::Saves()
 {
 }
 
-SlotView Saves::view(const int slot) const
+std::vector<gamelib::ui::SlotRow> Saves::rows() const
 {
-    const gamelib::storage::SaveSlotInfo info = m_slots.info(_slotName(slot));
-    return {.exists = info.exists, .readable = info.readable, .summary = info.summary};
+    std::vector<gamelib::ui::SlotRow> rows;
+    for (int slot = 0; slot < kSlotCount; ++slot) {
+        const gamelib::storage::SaveSlotInfo info = m_slots.info(_slotName(slot));
+        rows.push_back({.exists = info.exists, .readable = info.readable, .summary = info.summary});
+    }
+    return rows;
 }
 
 std::optional<game::Progress> Saves::load(const int slot)

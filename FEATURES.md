@@ -71,8 +71,9 @@ What Cavern does today, verified by running it.
 ## Saves, map and menus
 
 - Three save slots (GameLib's `SaveSlots`: versioned, checksummed, with a
-  backup), chosen on a slot list with a summary per slot and erase asked
-  twice; shrines heal, refill bolts and save.
+  backup; the world flags and map fog through GameLib's world file), chosen
+  on GameLib's slot list with a summary per slot and erase asked twice;
+  shrines heal, refill bolts and save.
 - A map screen of rounded room blocks per area (GameLib's `WorldMap`), fogged
   by visits, with map stations charting an area's outline; markers for
   shrines, map stations, guardians not yet beaten, items seen and the
@@ -101,9 +102,9 @@ What Cavern does today, verified by running it.
 - A hooded wanderer with a trailing scarf and a lamp; creatures and
   guardians as layered SDF bodies; items with pulsing auras.
 - Lights (the wanderer's lamp, shrines, items, glowing creatures and shots),
-  bloom and a dark ambient per area; ambient motes (dust, spores, drips,
-  glints, embers); shards, sparks, dust, rings, screen shake, flashes and
-  hit stop.
+  bloom and a dark ambient per area; ambient motes (GameLib's `Ambient`:
+  dust, spores, drips, glints, embers); shards, sparks, dust, rings, screen
+  shake, flashes and hit stop.
 - Synthesized effects (slash, bolt, dash whoosh, pound thud, doors, save
   chime, item and ability fanfares, guardians) and ten tunes: an ambient
   track per area crossfading at the borders, the guardians, the heart, the

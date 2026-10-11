@@ -13,7 +13,6 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
-#include <cstdlib>
 #include <string_view>
 #include <utility>
 
@@ -245,8 +244,8 @@ void CavernGame::handleResult(gamelib::app::App& app, const gamelib::app::Arcade
             break;
         }
         m_mode = Mode::Slots;
-        m_slotCursor = prefs().lastSlot;
-        m_confirmErase = -1;
+        m_slotList.setRows(m_saves.rows());
+        m_slotList.setCursor(prefs().lastSlot);
         app.input().releaseAll();
         break;
     case ArcadeAction::ToTitle: toTitle(app); break;
@@ -267,46 +266,25 @@ void CavernGame::handleResult(gamelib::app::App& app, const gamelib::app::Arcade
 
 void CavernGame::slotsCommand(gamelib::app::App& app, const MenuInput input)
 {
-    switch (input) {
-    case MenuInput::Up:
-        m_slotCursor = (m_slotCursor + kSlotCount) % (kSlotCount + 1);
-        m_confirmErase = -1;
-        m_sfx.queue(app.sounds(), Sfx::MenuMove);
+    const gamelib::ui::SlotResult r = m_slotList.handle(input);
+    switch (r.action) {
+    case gamelib::ui::SlotAction::Moved: m_sfx.queue(app.sounds(), Sfx::MenuMove); break;
+    case gamelib::ui::SlotAction::EraseAsked: m_sfx.queue(app.sounds(), Sfx::DoorLocked); break;
+    case gamelib::ui::SlotAction::Erase:
+        m_saves.erase(r.slot);
+        m_slotList.setRows(m_saves.rows());
+        m_sfx.queue(app.sounds(), Sfx::Break);
         break;
-    case MenuInput::Down:
-        m_slotCursor = (m_slotCursor + 1) % (kSlotCount + 1);
-        m_confirmErase = -1;
-        m_sfx.queue(app.sounds(), Sfx::MenuMove);
+    case gamelib::ui::SlotAction::Start:
+        m_sfx.queue(app.sounds(), Sfx::MenuSelect);
+        startSlot(app, r.slot);
         break;
-    case MenuInput::Left:
-    case MenuInput::Right:
-        // Erase a slot: asked once, done on the second press.
-        if (m_slotCursor < kSlotCount && m_saves.view(m_slotCursor).exists) {
-            if (m_confirmErase == m_slotCursor) {
-                m_saves.erase(m_slotCursor);
-                m_confirmErase = -1;
-                m_sfx.queue(app.sounds(), Sfx::Break);
-            } else {
-                m_confirmErase = m_slotCursor;
-                m_sfx.queue(app.sounds(), Sfx::DoorLocked);
-            }
-        }
-        break;
-    case MenuInput::Confirm:
-        if (m_slotCursor == kSlotCount) {
-            m_sfx.queue(app.sounds(), Sfx::MenuBack);
-            m_mode = Mode::Title;
-            m_menus.go(ArcadeScreen::Title, m_time);
-        } else {
-            m_sfx.queue(app.sounds(), Sfx::MenuSelect);
-            startSlot(app, m_slotCursor);
-        }
-        break;
-    case MenuInput::Back:
+    case gamelib::ui::SlotAction::Back:
         m_sfx.queue(app.sounds(), Sfx::MenuBack);
         m_mode = Mode::Title;
         m_menus.go(ArcadeScreen::Title, m_time);
         break;
+    case gamelib::ui::SlotAction::None: break;
     }
 }
 
@@ -334,8 +312,8 @@ void CavernGame::startSlot(gamelib::app::App& app, const int slot)
                   areaMapColor(m_session->area()).scaled(1.4f), 3.0f);
     m_music.play(app.audio(), areaTune(m_session->area()), 1.0f);
     // Developer aids: CAVERN_SCENE=ability0..3 shows an "ability get" scene, =ending the ending.
-    if (const char* scene = std::getenv("CAVERN_SCENE")) {
-        const std::string_view name{scene};
+    if (m_dev.scene) {
+        const std::string_view name{*m_dev.scene};
         if (name.starts_with("ability") && name.size() == 8) {
             m_session->debugAbilityScene(static_cast<game::Ability>(std::clamp(name[7] - '0', 0, game::kAbilityCount - 1)));
             m_banners.clear();

@@ -76,7 +76,7 @@ src/app/    presentation -> GameLib::app, ui, fx, ai, storage
                              creatures, guardians, shots, lights
             effects.*        shards, sparks, dust, rings, ambient motes, shake and flash
             actions.*        the ActionMap (rebindable keys and gamepad)
-            saves.*          three save slots (storage::SaveSlots) holding a Progress
+            saves.*          three save slots (storage::SaveSlots, app::writeWorldFlags) holding a Progress
             profile.*        cavern.ini (settings, bests, key bindings, last slot)
             sounds.*         synthesized effects and ten tunes
             palette.*        a core::Palette per area

@@ -24,6 +24,7 @@
 #include <gamelib/fx/banners.hpp>
 #include <gamelib/ui/dialogue_box.hpp>
 #include <gamelib/ui/hud.hpp>
+#include <gamelib/ui/save_slot_list.hpp>
 #include <gamelib/ui/transition.hpp>
 #include <gamelib/ui/world_map.hpp>
 
@@ -90,8 +91,7 @@ private:
     gamelib::core::Size m_canvas;
     Mode m_mode = Mode::Title;
     Overlay m_overlay = Overlay::None;
-    int m_slotCursor = 0;
-    int m_confirmErase = -1;
+    gamelib::ui::SaveSlotList m_slotList{kSlotCount};
     int m_slot = 0;
 
     std::optional<game::Session> m_session;

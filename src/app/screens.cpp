@@ -299,30 +299,18 @@ void CavernGame::drawMapScreen(gamelib::draw::DrawList& list, const game::Sessio
 
 void CavernGame::drawSlots(gamelib::draw::DrawList& list, const float time) const
 {
-    const Rect panel{560.0f, 220.0f, 800.0f, 640.0f};
-    gamelib::ui::drawPanel(list, panel, _panel());
-    gamelib::draw::drawVectorText(list, "CHOOSE A JOURNEY", 960.0f, 250.0f, {.size = 50.0f, .color = kGold, .weight = 1.4f, .align = Align::Center});
-    for (int i = 0; i <= kSlotCount; ++i) {
-        const Rect row{panel.x + 40.0f, panel.y + 120.0f + static_cast<float>(i) * 120.0f, panel.width - 80.0f, i == kSlotCount ? 70.0f : 100.0f};
-        const bool selected = i == m_slotCursor;
-        if (selected) {
-            list.box(row, srgb(0x1C2A36), {.cornerRadius = 12.0f, .borderWidth = 3.0f, .borderColor = kGold.withAlpha(0.8f)});
-        }
-        if (i == kSlotCount) {
-            list.text("BACK", row.center().x, row.center().y - 14.0f, {.pixelSize = 6.0f, .color = selected ? kGold : kText, .align = Align::Center});
-            continue;
-        }
-        const SlotView v = m_saves.view(i);
-        const std::string title = "JOURNEY " + std::to_string(i + 1);
-        list.text(title, row.x + 30.0f, row.y + 12.0f, {.pixelSize = 5.0f, .color = selected ? kGold : kText});
-        std::string line = !v.exists ? "NEW JOURNEY" : (v.readable ? v.summary : "DAMAGED - A BACKUP WILL BE TRIED");
-        if (m_confirmErase == i) {
-            line = "ERASE THIS JOURNEY? PRESS AGAIN";
-        }
-        list.text(line, row.x + 30.0f, row.y + 60.0f, {.pixelSize = 4.0f, .color = m_confirmErase == i ? kDanger : kTextDim});
-    }
-    list.text(keyText("{jump} BEGIN    {left} ERASE    {pause} BACK"), 960.0f, 900.0f,
-              {.pixelSize = 4.0f, .color = kTextDim.withAlpha(0.7f + 0.3f * std::sin(time * 2.0f)), .align = Align::Center});
+    (void)time;
+    gamelib::ui::SaveSlotStyle style{.menu = _menuStyle(), .danger = kDanger};
+    style.menu.veil = Color{0.0f, 0.0f, 0.02f, 0.35f}; // the demo stays visible behind
+    style.menu.titlePixel = 9.0f;
+    style.width = 940.0f; // room for the erase question
+    const gamelib::ui::SaveSlotLabels labels{.slot = "JOURNEY",
+                                             .empty = "NEW JOURNEY",
+                                             .damaged = "DAMAGED - A BACKUP WILL BE TRIED",
+                                             .erase = "ERASE THIS JOURNEY? PRESS AGAIN",
+                                             .back = "BACK"};
+    gamelib::ui::drawSaveSlots(list, m_slotList, m_canvas, style, labels, "CHOOSE A JOURNEY",
+                               keyText("{jump} BEGIN    {left} ERASE    {pause} BACK"));
 }
 
 void CavernGame::drawAbilityScene(gamelib::draw::DrawList& list, const game::Session& s, const float time) const
