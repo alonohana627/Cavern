@@ -115,6 +115,7 @@ private:
     Effects m_demoEffects;
     bool m_demoMode = false;
     float m_time = 0.0f;
+    int m_typed = 0; // letters typed since the last blip
 };
 
 } // namespace cavern::app

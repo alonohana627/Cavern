@@ -579,7 +579,10 @@ void CavernGame::frame(gamelib::app::App& app, const gamelib::app::FrameInfo& in
     m_banners.update(info.seconds);
     if (m_overlay == Overlay::Reading) {
         m_dialogue.update(info.seconds);
-        if (m_dialogue.revealedLastUpdate() > 0) {
+        // A soft blip every few letters as the text types out.
+        m_typed += static_cast<int>(m_dialogue.revealedLastUpdate());
+        if (m_typed >= 3) {
+            m_typed = 0;
             m_sfx.queue(app.sounds(), Sfx::Type, 0.5f);
         }
     }
