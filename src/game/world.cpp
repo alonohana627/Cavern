@@ -267,7 +267,10 @@ void World::scanRoom(const int index)
                 layer.at(cell) = gamelib::core::charTile(c);
                 continue;
             }
-            layer.at(cell) = gamelib::core::charTile(' ');
+            // A marker leaves air behind it - or water when it sits in water.
+            const bool wet = (x > 0 && row[static_cast<std::size_t>(x - 1)] == '~')
+                             || (x + 1 < columns && row[static_cast<std::size_t>(x + 1)] == '~');
+            layer.at(cell) = gamelib::core::charTile(wet ? '~' : ' ');
             const std::string flag = "item." + _cellName(cell);
             switch (c) {
             case 'S': m_start = cell; break;

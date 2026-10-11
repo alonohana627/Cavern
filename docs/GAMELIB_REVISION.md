@@ -8,3 +8,4 @@ messages); bump the pin only together with a new row.
 | Date | GameLib commit | Why |
 |---|---|---|
 | 2026-10-11 | `f68910fbb17155302eb3bebcdd2a0ca39c7bf183` (release 0.0.9) | the newest GameLib main when Cavern started |
+| 2026-10-11 | `425aad145b7ea431cd1a945321e1fdb1ea775fb8` | GameLib's attack timelines (`core::Attacker`), ground pound (`core::GroundPound`) and connected crumble patches, built from Cavern's first P0 report; the game's own copies are gone |

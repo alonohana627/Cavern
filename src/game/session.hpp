@@ -15,8 +15,6 @@
 // abilities, keys and upgrades, and the save station. Death returns the
 // hero to the last save station with the world as it is.
 
-#include "attack.hpp"
-#include "ground_pound.hpp"
 #include "rules.hpp"
 #include "world.hpp"
 
@@ -136,10 +134,11 @@ struct Hero {
     gamelib::core::Vulnerable vulnerable;
     gamelib::core::Resource health{kStartHealth, kStartHealth};
     gamelib::core::Resource ammo{kStartAmmo, kStartAmmo};
-    Attacker slash{1'000'000};
+    gamelib::core::Attacker slash{0, 1'000'000};
     int slashAim = 0;            // the swing in progress: -1 up, 0 forward, 1 down
     int struckId = 0;            // the swing that already struck the tiles
-    GroundPound pound;
+    int keptAim = 0;             // the aim of a press kept for the next swing
+    gamelib::core::GroundPound pound;
     int shootCooldown = 0;
     int shootPose = 0;
     int hurtTicks = 0;

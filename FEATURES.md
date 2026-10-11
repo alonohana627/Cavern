@@ -9,9 +9,14 @@ What Cavern does today, verified by running it.
   room edge meets an opening of the room behind it.
 - Rooms join through their edges with a short screen scroll (GameLib's
   `RoomScroll`); the camera stays inside the current room.
-- The surface ruins' first rooms: the cliff road, the broken colonnade with a
-  door struck open, and the sunken court whose floor collapses into the long
-  fall to the fungal caves.
+- Fifty-seven rooms in five areas (surface ruins, fungal caves, flooded
+  halls, crystal depths, the core), from single screens to a 2 x 2 arena
+  and a 4-screen vent: the game opens with the floor of a ruined court
+  collapsing into the long fall to the fungal caves.
+- Abilities as gates: the shadow dash crosses 7-tile thorn gaps, the cling
+  claws climb narrow shafts, the quake stomp breaks cracked floors, the echo
+  wings reach 5-tile glass ledges; four key-colored doors and one-way doors
+  that open only from the far side (shortcuts).
 
 ## The wanderer
 

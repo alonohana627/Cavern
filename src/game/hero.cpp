@@ -20,14 +20,14 @@ using gamelib::core::Rect;
 using gamelib::core::TileId;
 using gamelib::core::Vec2;
 
-const AttackClip kSlashForward{.startup = 2, .active = 5, .recovery = 9, .hitbox = {3.0f, -12.0f, 25.0f, 20.0f},
+const gamelib::core::AttackClip kSlashForward{.startup = 2, .active = 5, .recovery = 9, .hitbox = {3.0f, -12.0f, 25.0f, 20.0f},
                                .damage = 1, .knockback = {1.6f, -1.0f}, .chainWindow = 4};
-const AttackClip kSlashUp{.startup = 2, .active = 5, .recovery = 9, .hitbox = {-12.0f, -36.0f, 24.0f, 26.0f},
+const gamelib::core::AttackClip kSlashUp{.startup = 2, .active = 5, .recovery = 9, .hitbox = {-12.0f, -36.0f, 24.0f, 26.0f},
                           .damage = 1, .knockback = {0.0f, -1.5f}, .chainWindow = 4};
-const AttackClip kSlashDown{.startup = 2, .active = 6, .recovery = 8, .hitbox = {-11.0f, 6.0f, 22.0f, 24.0f},
+const gamelib::core::AttackClip kSlashDown{.startup = 2, .active = 6, .recovery = 8, .hitbox = {-11.0f, 6.0f, 22.0f, 24.0f},
                             .damage = 1, .knockback = {0.0f, 1.5f}, .chainWindow = 4};
 
-const PoundTuning kPound{.hangTicks = kPoundHangTicks, .speed = kPoundSpeed, .recoveryTicks = kPoundRecoveryTicks};
+const gamelib::core::PoundTuning kPound{.hangTicks = kPoundHangTicks, .speed = kPoundSpeed, .recoveryTicks = kPoundRecoveryTicks};
 
 TileId _tileAt(const gamelib::core::TileMap& map, const Vec2 point)
 {
@@ -97,6 +97,11 @@ void Session::stepHero(const Input& input)
                                                      .dashPressed = in.dashPressed};
         const float xBefore = body.box.x;
         const gamelib::core::PlatformerStep step = gamelib::core::stepPlatformer(body, intent, tuning, world);
+        // Breaking the surface with jump held: a leap out of the water onto the bank.
+        if (h.swimming && _tileAt(m_map, body.box.center()) != '~' && body.velocity.y < 0.0f && in.jumpHeld) {
+            body.velocity.y = std::min(body.velocity.y, -kWaterLeap);
+            body.rising = false;
+        }
         const Vec2 feet = body.box.bottomCenter();
         if (step.events.jumped) {
             m_events.push({.kind = EventKind::Jump, .at = feet});
@@ -140,7 +145,7 @@ void Session::stepPound(const Input& in, bool& handled)
     Hero& h = m_hero;
     gamelib::core::PlatformerBody& body = h.body;
     if (!h.pound.active() && m_progress.abilities.has(Ability::GroundPound) && in.jumpPressed && in.aim > 0
-        && !body.grounded && !h.swimming && !h.slash.busy()) {
+        && !body.grounded && !h.slash.busy()) {
         if (h.pound.start(body)) {
             m_events.push({.kind = EventKind::Pound, .at = body.box.center()});
         }
@@ -149,7 +154,7 @@ void Session::stepPound(const Input& in, bool& handled)
         return;
     }
     handled = true;
-    const PoundStep step = h.pound.step(body, kPound, tileWorld());
+    const gamelib::core::PoundStep step = h.pound.step(body, kPound, tileWorld());
     if (step.contacts.hazard) {
         if (m_map.layer(0).at(step.contacts.hazardCell) == 'L') {
             die();
@@ -193,21 +198,23 @@ void Session::stepSlash(const Input& in)
     gamelib::core::PlatformerBody& body = h.body;
     if (in.slashPressed && !h.pound.active()) {
         const int aim = in.aim < 0 ? -1 : (in.aim > 0 && !body.grounded ? 1 : 0);
-        const AttackClip& clip = aim < 0 ? kSlashUp : (aim > 0 ? kSlashDown : kSlashForward);
-        const bool idle = !h.slash.busy();
-        if (h.slash.start(clip, body.facing) && idle) {
+        const gamelib::core::AttackClip& clip = aim < 0 ? kSlashUp : (aim > 0 ? kSlashDown : kSlashForward);
+        const gamelib::core::AttackPress press = h.slash.start(clip, body.facing);
+        if (press == gamelib::core::AttackPress::Started) {
             h.slashAim = aim;
             m_events.push({.kind = EventKind::Slash, .at = body.box.center(), .value = aim});
+        } else if (press == gamelib::core::AttackPress::Kept) {
+            h.keptAim = aim;
         }
     }
     if (!h.slash.busy()) {
         return;
     }
-    const AttackPhase before = h.slash.phase();
-    const std::optional<gamelib::core::Hit> hit = h.slash.tick(body.box.center(), 0);
-    if (before == AttackPhase::Recovery && h.slash.phase() == AttackPhase::Startup) {
+    const gamelib::core::AttackStep swing = h.slash.tick(body.box.center());
+    const std::optional<gamelib::core::Hit>& hit = swing.hit;
+    if (swing.chained) {
         // A kept press started the next swing.
-        h.slashAim = in.aim < 0 ? -1 : (in.aim > 0 && !body.grounded ? 1 : 0);
+        h.slashAim = h.keptAim;
         m_events.push({.kind = EventKind::Slash, .at = body.box.center(), .value = h.slashAim});
     }
     if (!hit) {

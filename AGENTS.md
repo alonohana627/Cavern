@@ -17,8 +17,7 @@ separate repository). It is the fourth platformer of GameLib's run
   `docs/GAMELIB_REVISION.md`. GameLib keeps no backwards compatibility.
 - GameLib is changed only to fix a bug that blocks the game (GameLib commit
   with a headless test first, then a re-pin). Generic code the game had to
-  write itself is kept separable (`src/game/attack.*`,
-  `src/game/ground_pound.*`) and reported as a P0 candidate for GameLib's
+  write itself is kept separable and reported as a P0 candidate for GameLib's
   `FEATURE_SUGGESTIONS.md`; this repository has no feature-suggestions file.
 - Snake, Tetris, Pong, Breakout, Asteroids, Invaders, Minesweeper, Leap,
   Bounder and Blaster are read-only references.
@@ -67,8 +66,6 @@ src/game/   rules -> GameLib::core (+ GameLib::ai)
             session.*        one run: rooms and scrolls (core::RoomScroll), doors, breakables,
                              items, stations, saves' Progress, escape, events
             hero.cpp         the controller with abilities, swimming, slash, shot, pound, thorns
-            attack.*         melee frame data (AttackClip, Attacker) - generic
-            ground_pound.*   the ground pound (GroundPound) - generic
             enemies.cpp      the fifteen creatures
             bosses.cpp       the four guardians and the molten heart (StateMachine, PhaseByHealth)
             demo.*           the recorded demo through the first rooms

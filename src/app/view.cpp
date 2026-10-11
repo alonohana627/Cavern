@@ -240,7 +240,7 @@ void WorldView::drawHero(gamelib::draw::DrawList& list, const Shapes& shapes, co
               .params = {static_cast<float>(hero.body.facing), static_cast<float>(pose), phase, kMargin},
               .bits = static_cast<std::uint64_t>(std::clamp(glow, 0.0f, 1.0f) * 255.0f)});
     // The slash: a crescent where the hitbox is.
-    if (hero.slash.busy() && hero.slash.phase() != game::AttackPhase::Startup) {
+    if (hero.slash.busy() && hero.slash.phase() != gamelib::core::AttackPhase::Startup) {
         const Rect hit = hero.slash.hitbox(box.center());
         const float rotation = hero.slashAim < 0 ? -kPi / 2.0f : (hero.slashAim > 0 ? kPi / 2.0f : (hero.slash.facing() < 0 ? kPi : 0.0f));
         const float size = std::max(hit.width, hit.height) + 8.0f;

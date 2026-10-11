@@ -55,6 +55,8 @@ inline constexpr float kShotSpeed = 5.2f;
 inline constexpr float kKnockbackSpeed = 1.6f;
 inline constexpr float kPogoSpeed = 4.2f;       // the bounce off an enemy hit by a down slash
 inline constexpr float kPoundSpeed = 7.5f;
+inline constexpr float kRoomLift = 5.0f;      // the upward speed given on entering a room from below
+inline constexpr float kWaterLeap = 4.4f;     // the upward speed leaving the water with jump held
 inline constexpr int kPoundHangTicks = 9;
 inline constexpr int kPoundRecoveryTicks = 12;
 

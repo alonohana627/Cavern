@@ -5,15 +5,16 @@
 # GameLib::ai: no window, GPU, audio or clock, deterministic for the
 # per-tick input.
 add_library(cavern_game STATIC
-    attack.cpp
     bosses.cpp
     demo.cpp
     enemies.cpp
-    ground_pound.cpp
     hero.cpp
     rules.cpp
     session.cpp
     world.cpp
+    world_core.cpp
+    world_crystal.cpp
+    world_flooded.cpp
     world_fungal.cpp
     world_ruins.cpp
     world_text.cpp)

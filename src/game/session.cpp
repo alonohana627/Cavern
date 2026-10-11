@@ -64,7 +64,7 @@ Session::Session(Progress progress)
     }
     applyFlags();
     m_collapse = gamelib::core::CrumbleTiles{m_map.layer(0), gamelib::core::charTile('Q'), gamelib::core::charTile(' '),
-                                             {.shakeTicks = 34, .goneTicks = -1}};
+                                             {.shakeTicks = 34, .goneTicks = -1, .connected = true}};
     respawn();
 }
 
@@ -383,13 +383,15 @@ void Session::scrollTick()
     }
     if (m_scroll->tick(m_hero.body.box)) {
         const int to = m_scroll->to;
+        const gamelib::core::Direction side = m_scroll->side;
         m_scroll.reset();
         m_phase = Phase::Playing;
         m_phaseTicks = 0;
         enterRoom(to, true);
-        // Keep the jump's motion going, but no further than the room allows.
-        if (m_hero.body.velocity.y < -1.0f) {
-            m_hero.body.velocity.y = std::min(m_hero.body.velocity.y, -3.5f);
+        // Rising into the room above: a lift onto its floor beside the way up.
+        if (side == gamelib::core::Direction::Up) {
+            m_hero.body.velocity.y = std::min(m_hero.body.velocity.y, -kRoomLift);
+            m_hero.body.rising = false;
         }
     }
 }
