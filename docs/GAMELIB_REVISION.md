@@ -9,3 +9,4 @@ messages); bump the pin only together with a new row.
 |---|---|---|
 | 2026-10-11 | `f68910fbb17155302eb3bebcdd2a0ca39c7bf183` (release 0.0.9) | the newest GameLib main when Cavern started |
 | 2026-10-11 | `425aad145b7ea431cd1a945321e1fdb1ea775fb8` | GameLib's attack timelines (`core::Attacker`), ground pound (`core::GroundPound`) and connected crumble patches, built from Cavern's first P0 report; the game's own copies are gone |
+| 2026-10-11 | `9e37db65844220a033d66d6810aa319e33b78e84` | GameLib's room grid (`layoutGrid`), tile groups and sealed borders, built from Cavern's second P0 report: the game's edge check, door and breakable grouping and room seal are gone (unsealed water now stays water) |

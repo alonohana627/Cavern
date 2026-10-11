@@ -33,6 +33,9 @@
 #include "rules.hpp"
 
 #include <gamelib/core/grid.hpp>
+#include <gamelib/core/room_grid.hpp>
+#include <gamelib/core/tile_groups.hpp>
+#include <gamelib/core/tile_groups.hpp>
 #include <gamelib/core/math.hpp>
 #include <gamelib/core/tile_collision.hpp>
 #include <gamelib/core/tile_map.hpp>
@@ -211,9 +214,7 @@ public:
 private:
     void load();
     void scanRoom(int index);
-    void checkEdges();
-    void groupDoors();
-    void groupBreakables();
+    void groupObjects();
 
     gamelib::core::TileMap m_map{1, 1, kTile};
     gamelib::core::TileShapes m_shapes;
@@ -226,9 +227,9 @@ private:
     std::vector<Station> m_stations;
     std::vector<BossDef> m_bosses;
     std::vector<Passage> m_passages;
-    gamelib::core::Grid<int> m_doorAt{1, 1, -1};
-    gamelib::core::Grid<int> m_breakAt{1, 1, -1};
-    gamelib::core::Grid<int> m_roomAt{1, 1, -1};
+    gamelib::core::RoomGrid m_grid;
+    gamelib::core::TileGroups m_doorGroups;
+    gamelib::core::TileGroups m_breakGroups;
     gamelib::core::Cell m_start;
     gamelib::core::Cell m_exit;
     gamelib::core::Cell m_mapSize;
@@ -245,8 +246,7 @@ private:
 [[nodiscard]] std::vector<RoomDef> coreRooms();
 [[nodiscard]] std::vector<SignText> signTexts();
 
-// What the collision layer treats as solid rock for the edge check and the
-// enemies: rock, crystal, cracked tiles, collapsing floors and closed doors.
+// True for the tiles of a door (plain, keyed, one-way, the escape seal).
 [[nodiscard]] bool isDoorTile(gamelib::core::TileId id);
 
 } // namespace cavern::game

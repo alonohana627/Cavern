@@ -674,29 +674,14 @@ void Session::stepDrops()
 
 void Session::sealRoom(const bool sealed)
 {
-    gamelib::core::TileLayer& layer = m_map.layer(0);
+    // GameLib's sealBorder closes the open border cells and unseal gives each back its own tile.
     if (!sealed) {
-        for (const Cell c : m_seals) {
-            layer.at(c) = gamelib::core::charTile(' ');
-        }
+        gamelib::core::unseal(m_map.layer(0), m_seals);
         m_seals.clear();
         return;
     }
-    const gamelib::core::CellRange r = room().cells;
-    const auto seal = [&](const Cell c) {
-        if (layer.at(c) == ' ' || layer.at(c) == '~') {
-            layer.at(c) = gamelib::core::charTile('Z');
-            m_seals.push_back(c);
-        }
-    };
-    for (int x = r.min.x; x <= r.max.x; ++x) {
-        seal({x, r.min.y});
-        seal({x, r.max.y});
-    }
-    for (int y = r.min.y + 1; y < r.max.y; ++y) {
-        seal({r.min.x, y});
-        seal({r.max.x, y});
-    }
+    m_seals = gamelib::core::sealBorder(m_map.layer(0), room().cells,
+                                        [](const TileId id) { return id == ' ' || id == '~'; }, gamelib::core::charTile('Z'));
 }
 
 void Session::startEscape()

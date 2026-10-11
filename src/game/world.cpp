@@ -1,7 +1,6 @@
 #include "world.hpp"
 
 #include <algorithm>
-#include <map>
 #include <stdexcept>
 
 namespace cavern::game {
@@ -174,8 +173,7 @@ World::World()
 
 int World::roomOf(const Cell cell) const
 {
-    const Cell mapCell{cell.x >= 0 ? cell.x / kScreenColumns : -1, cell.y >= 0 ? cell.y / kScreenRows : -1};
-    return m_roomAt.inside(mapCell) ? m_roomAt.at(mapCell) : -1;
+    return m_grid.roomOf(cell);
 }
 
 int World::roomById(const std::string_view id) const
@@ -190,56 +188,44 @@ int World::roomById(const std::string_view id) const
 
 int World::doorAt(const Cell cell) const
 {
-    return m_doorAt.inside(cell) ? m_doorAt.at(cell) : -1;
+    return m_doorGroups.at(cell);
 }
 
 int World::breakableAt(const Cell cell) const
 {
-    return m_breakAt.inside(cell) ? m_breakAt.at(cell) : -1;
+    return m_breakGroups.at(cell);
 }
 
 void World::load()
 {
+    // GameLib's room grid places the rooms and checks every edge; the
+    // markers and objects are Cavern's.
     const std::vector<RoomDef>& defs = _defs();
-    Cell size{1, 1};
+    std::vector<gamelib::core::GridRoom> grid;
+    grid.reserve(defs.size());
     for (const RoomDef& def : defs) {
-        if (def.size.x < 1 || def.size.y < 1 || def.corner.x < 0 || def.corner.y < 0) {
-            _fail(def, "bad corner or size");
-        }
-        size.x = std::max(size.x, def.corner.x + def.size.x);
-        size.y = std::max(size.y, def.corner.y + def.size.y);
+        grid.push_back({.name = def.id, .corner = def.corner, .size = def.size, .rows = def.rows,
+                        .openEdges = def.area == Area::Ruins ? gamelib::core::neighborBit::N : std::uint8_t{0}});
     }
-    m_mapSize = size;
-    m_roomAt = gamelib::core::Grid<int>{size.x, size.y, -1};
-    m_map = gamelib::core::TileMap{size.x * kScreenColumns, size.y * kScreenRows, kTile, 1, gamelib::core::charTile('#')};
-    m_doorAt = gamelib::core::Grid<int>{m_map.width(), m_map.height(), -1};
-    m_breakAt = gamelib::core::Grid<int>{m_map.width(), m_map.height(), -1};
-
-    for (const RoomDef& def : defs) {
-        const int index = static_cast<int>(m_rooms.size());
-        for (int y = 0; y < def.size.y; ++y) {
-            for (int x = 0; x < def.size.x; ++x) {
-                int& owner = m_roomAt.at(def.corner + Cell{x, y});
-                if (owner >= 0) {
-                    _fail(def, "overlaps room " + std::string{m_rooms[static_cast<std::size_t>(owner)].def->id});
-                }
-                owner = index;
-            }
-        }
+    m_grid = gamelib::core::layoutGrid(grid, {kScreenColumns, kScreenRows}, '#',
+                                       [](const char c) { return _passable(gamelib::core::charTile(c)); });
+    m_mapSize = m_grid.mapSize();
+    m_map = gamelib::core::TileMap{m_mapSize.x * kScreenColumns, m_mapSize.y * kScreenRows, kTile, 1,
+                                   gamelib::core::charTile('#')};
+    for (std::size_t i = 0; i < defs.size(); ++i) {
         RoomInfo info;
-        info.def = &def;
-        info.cells = {.min = {def.corner.x * kScreenColumns, def.corner.y * kScreenRows},
-                      .max = {(def.corner.x + def.size.x) * kScreenColumns - 1,
-                              (def.corner.y + def.size.y) * kScreenRows - 1}};
+        info.def = &defs[i];
+        info.cells = m_grid.rooms[i];
         info.bounds = gamelib::core::rangeRect(info.cells, kTile);
         m_rooms.push_back(std::move(info));
         m_roomBounds.push_back(m_rooms.back().bounds);
         (void)m_graph.addRoom(m_rooms.back().bounds);
-        scanRoom(index);
+        scanRoom(static_cast<int>(i));
     }
-    checkEdges();
-    groupDoors();
-    groupBreakables();
+    for (const gamelib::core::GridPassage& p : m_grid.passages) {
+        m_passages.push_back({.a = p.a, .b = p.b, .from = p.at - p.across * 0.25f, .to = p.at + p.across * 0.25f});
+    }
+    groupObjects();
 }
 
 void World::scanRoom(const int index)
@@ -248,18 +234,11 @@ void World::scanRoom(const int index)
     const RoomDef& def = *info.def;
     const int rows = def.size.y * kScreenRows;
     const int columns = def.size.x * kScreenColumns;
-    if (static_cast<int>(def.rows.size()) != rows) {
-        _fail(def, "has " + std::to_string(def.rows.size()) + " rows, expected " + std::to_string(rows));
-    }
     const std::vector<SignText> texts = signTexts();
     int signs = 0;
     gamelib::core::TileLayer& layer = m_map.layer(0);
     for (int y = 0; y < rows; ++y) {
         const std::string_view row = def.rows[static_cast<std::size_t>(y)];
-        if (static_cast<int>(row.size()) != columns) {
-            _fail(def, "row " + std::to_string(y) + " has " + std::to_string(row.size()) + " columns, expected "
-                           + std::to_string(columns));
-        }
         for (int x = 0; x < columns; ++x) {
             const char c = row[static_cast<std::size_t>(x)];
             const Cell cell = info.cells.min + Cell{x, y};
@@ -328,153 +307,37 @@ void World::scanRoom(const int index)
     }
 }
 
-void World::checkEdges()
+void World::groupObjects()
 {
+    // Doors and breakable patches are GameLib tile groups: runs of one tile.
     const gamelib::core::TileLayer& layer = m_map.layer(0);
-    // Pairs of cells across every room edge: an opening must face an opening
-    // of the room behind it (or the sky, above a room at the top of the map).
-    std::map<std::pair<int, int>, std::vector<std::pair<Cell, Cell>>> runs;
-    for (std::size_t i = 0; i < m_rooms.size(); ++i) {
-        const RoomInfo& room = m_rooms[i];
-        const gamelib::core::CellRange r = room.cells;
-        const auto check = [&](const Cell inside, const Cell outside) {
-            const TileId here = layer.at(inside);
-            if (!_passable(here)) {
-                return;
-            }
-            const int other = roomOf(outside);
-            if (other < 0 || !layer.inside(outside)) {
-                if (outside.y < r.min.y && room.def->area == Area::Ruins) {
-                    return; // the open sky
-                }
-                _fail(*room.def, "an opening at " + _cellName(inside - r.min) + " leads nowhere");
-            }
-            if (!_passable(layer.at(outside))) {
-                _fail(*room.def, "an opening at " + _cellName(inside - r.min) + " faces rock in room "
-                                     + std::string{m_rooms[static_cast<std::size_t>(other)].def->id});
-            }
-            if (static_cast<int>(i) < other) {
-                runs[{static_cast<int>(i), other}].emplace_back(inside, outside);
-            }
-        };
-        for (int x = r.min.x; x <= r.max.x; ++x) {
-            check({x, r.min.y}, {x, r.min.y - 1});
-            check({x, r.max.y}, {x, r.max.y + 1});
+    m_doorGroups = gamelib::core::TileGroups{layer, isDoorTile};
+    for (int i = 0; i < m_doorGroups.size(); ++i) {
+        const gamelib::core::TileGroup& g = m_doorGroups[i];
+        Door door;
+        door.tile = g.id;
+        door.cells = g.cells;
+        door.flag = m_doorGroups.flagName(i, "door");
+        door.box = gamelib::core::rangeRect(g.range, kTile);
+        switch (g.id) {
+        case ')': door.kind = DoorKind::OpensFromLeft; break;
+        case '(': door.kind = DoorKind::OpensFromRight; break;
+        case '|': door.kind = DoorKind::Escape; break;
+        case 'D': door.kind = DoorKind::Plain; break;
+        default:
+            door.kind = DoorKind::Key;
+            door.key = g.id - '1';
+            break;
         }
-        for (int y = r.min.y; y <= r.max.y; ++y) {
-            check({r.min.x, y}, {r.min.x - 1, y});
-            check({r.max.x, y}, {r.max.x + 1, y});
-        }
+        m_doors.push_back(std::move(door));
     }
-    // One map link per run of openings between two rooms, drawn across the edge.
-    const auto toMap = [](const Vec2 cellCenter) {
-        return Vec2{cellCenter.x / static_cast<float>(kScreenColumns), cellCenter.y / static_cast<float>(kScreenRows)};
-    };
-    for (const auto& [pair, cells] : runs) {
-        std::size_t start = 0;
-        for (std::size_t i = 1; i <= cells.size(); ++i) {
-            const bool breaks = i == cells.size() || std::abs(cells[i].first.x - cells[i - 1].first.x)
-                                                             + std::abs(cells[i].first.y - cells[i - 1].first.y) != 1;
-            if (!breaks) {
-                continue;
-            }
-            const Cell a = cells[(start + i - 1) / 2].first;
-            const Cell b = cells[(start + i - 1) / 2].second;
-            const Vec2 ca{static_cast<float>(a.x) + 0.5f, static_cast<float>(a.y) + 0.5f};
-            const Vec2 cb{static_cast<float>(b.x) + 0.5f, static_cast<float>(b.y) + 0.5f};
-            const Vec2 mid = (ca + cb) * 0.5f;
-            const Vec2 dir = cb - ca;
-            const Vec2 reach = dir * (0.22f * static_cast<float>(kScreenRows));
-            m_passages.push_back({.a = pair.first, .b = pair.second, .from = toMap(mid - reach), .to = toMap(mid + reach)});
-            start = i;
-        }
-    }
-}
-
-void World::groupDoors()
-{
-    gamelib::core::TileLayer& layer = m_map.layer(0);
-    for (int y = 0; y < layer.height(); ++y) {
-        for (int x = 0; x < layer.width(); ++x) {
-            const Cell first{x, y};
-            const TileId id = layer.at(first);
-            if (!isDoorTile(id) || m_doorAt.at(first) >= 0) {
-                continue;
-            }
-            Door door;
-            door.tile = id;
-            door.flag = "door." + _cellName(first);
-            switch (id) {
-            case ')': door.kind = DoorKind::OpensFromLeft; break;
-            case '(': door.kind = DoorKind::OpensFromRight; break;
-            case '|': door.kind = DoorKind::Escape; break;
-            case 'D': door.kind = DoorKind::Plain; break;
-            default:
-                door.kind = DoorKind::Key;
-                door.key = id - '1';
-                break;
-            }
-            const int index = static_cast<int>(m_doors.size());
-            // The connected run of the same tile: a door is one or two columns wide.
-            std::vector<Cell> open{first};
-            m_doorAt.at(first) = index;
-            while (!open.empty()) {
-                const Cell c = open.back();
-                open.pop_back();
-                door.cells.push_back(c);
-                for (const Cell d : {Cell{1, 0}, Cell{-1, 0}, Cell{0, 1}, Cell{0, -1}}) {
-                    const Cell n = c + d;
-                    if (layer.inside(n) && layer.at(n) == id && m_doorAt.at(n) < 0) {
-                        m_doorAt.at(n) = index;
-                        open.push_back(n);
-                    }
-                }
-            }
-            std::ranges::sort(door.cells, [](const Cell a, const Cell b) { return a.x != b.x ? a.x < b.x : a.y < b.y; });
-            Rect box = gamelib::core::cellRect(door.cells.front(), kTile);
-            for (const Cell c : door.cells) {
-                const Rect r = gamelib::core::cellRect(c, kTile);
-                const float left = std::min(box.left(), r.left());
-                const float top = std::min(box.top(), r.top());
-                box = {left, top, std::max(box.right(), r.right()) - left, std::max(box.bottom(), r.bottom()) - top};
-            }
-            door.box = box;
-            m_doors.push_back(std::move(door));
-        }
-    }
-}
-
-void World::groupBreakables()
-{
-    gamelib::core::TileLayer& layer = m_map.layer(0);
-    for (int y = 0; y < layer.height(); ++y) {
-        for (int x = 0; x < layer.width(); ++x) {
-            const Cell first{x, y};
-            const TileId id = layer.at(first);
-            if ((id != '%' && id != 'X' && id != 'Q') || m_breakAt.at(first) >= 0) {
-                continue;
-            }
-            Breakable patch;
-            patch.kind = id == '%' ? BreakKind::Floor : (id == 'X' ? BreakKind::Wall : BreakKind::Collapse);
-            patch.flag = "broke." + _cellName(first);
-            patch.room = roomOf(first);
-            const int index = static_cast<int>(m_breakables.size());
-            std::vector<Cell> open{first};
-            m_breakAt.at(first) = index;
-            while (!open.empty()) {
-                const Cell c = open.back();
-                open.pop_back();
-                patch.cells.push_back(c);
-                for (const Cell d : {Cell{1, 0}, Cell{-1, 0}, Cell{0, 1}, Cell{0, -1}}) {
-                    const Cell n = c + d;
-                    if (layer.inside(n) && layer.at(n) == id && m_breakAt.at(n) < 0) {
-                        m_breakAt.at(n) = index;
-                        open.push_back(n);
-                    }
-                }
-            }
-            m_breakables.push_back(std::move(patch));
-        }
+    m_breakGroups = gamelib::core::TileGroups{layer, [](const TileId id) { return id == '%' || id == 'X' || id == 'Q'; }};
+    for (int i = 0; i < m_breakGroups.size(); ++i) {
+        const gamelib::core::TileGroup& g = m_breakGroups[i];
+        m_breakables.push_back({.kind = g.id == '%' ? BreakKind::Floor : (g.id == 'X' ? BreakKind::Wall : BreakKind::Collapse),
+                                .cells = g.cells,
+                                .flag = m_breakGroups.flagName(i, "broke"),
+                                .room = roomOf(g.cells.front())});
     }
 }
 

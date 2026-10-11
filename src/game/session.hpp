@@ -26,6 +26,7 @@
 #include <gamelib/core/math.hpp>
 #include <gamelib/core/platformer.hpp>
 #include <gamelib/core/projectiles.hpp>
+#include <gamelib/core/room_grid.hpp>
 #include <gamelib/core/rng.hpp>
 #include <gamelib/core/skills.hpp>
 #include <gamelib/core/state_machine.hpp>
@@ -215,7 +216,7 @@ public:
     [[nodiscard]] bool itemVisible(int item) const;
     [[nodiscard]] const gamelib::core::CrumbleTiles& collapse() const { return m_collapse; }
     // Seal tiles closing a guardian's room during the fight.
-    [[nodiscard]] std::span<const gamelib::core::Cell> seals() const { return m_seals; }
+    [[nodiscard]] std::span<const gamelib::core::SealedCell> seals() const { return m_seals; }
     // The station (sign, tablet, save, map) the hero can use now, or -1.
     [[nodiscard]] int stationInReach() const;
     [[nodiscard]] std::optional<int> escapeTicksLeft() const;
@@ -296,7 +297,7 @@ private:
     Shots m_shots{96};
     std::vector<Drop> m_drops;
     std::optional<Boss> m_boss;
-    std::vector<gamelib::core::Cell> m_seals;
+    std::vector<gamelib::core::SealedCell> m_seals;
     gamelib::core::Telegraphs<gamelib::core::Vec2> m_warnings;
     gamelib::core::Rng m_rng{0xCA7E};
     std::optional<gamelib::core::RoomScroll> m_scroll;
