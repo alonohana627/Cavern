@@ -93,9 +93,8 @@ struct Abilities {
     friend constexpr bool operator==(Abilities, Abilities) = default;
 };
 
-// The hero's movement for the abilities owned: on land, or swimming in
-// water (slower, lighter, a stroke upwards on every jump press); `cling`
-// false on glassy crystal walls, which cannot be slid down or jumped off.
-[[nodiscard]] gamelib::core::PlatformerTuning heroTuning(Abilities abilities, bool swimming, bool cling);
+// The hero's movement for the abilities owned, swimming included (slower,
+// lighter, a stroke upwards on every jump press, a leap out of the surface).
+[[nodiscard]] gamelib::core::PlatformerTuning heroTuning(Abilities abilities);
 
 } // namespace cavern::game

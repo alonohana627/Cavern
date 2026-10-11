@@ -1,5 +1,6 @@
 // The hero: GameLib's platformer controller with the abilities found so
-// far, swimming, glassy crystal that cannot be clung to, the slash (frame
+// far (swimming and glassy crystal that cannot be clung to are GameLib's
+// too), the last safe floor after thorns, the slash (frame
 // data from attack.hpp: forward, up, and down in the air with a pogo off
 // whatever it strikes), the limited-ammo shot, the ground pound and thorns.
 #include "session.hpp"
@@ -29,35 +30,11 @@ const gamelib::core::AttackClip kSlashDown{.startup = 2, .active = 6, .recovery 
 
 const gamelib::core::PoundTuning kPound{.hangTicks = kPoundHangTicks, .speed = kPoundSpeed, .recoveryTicks = kPoundRecoveryTicks};
 
-TileId _tileAt(const gamelib::core::TileMap& map, const Vec2 point)
+// Thorns, lava, collapsing flagstones and thin ledges under or beside the
+// feet: not a safe place to come back to.
+bool _unsafeFloor(const TileId id)
 {
-    const Cell c = gamelib::core::cellAt(point, kTile);
-    return map.layer(0).inside(c) ? map.layer(0).at(c) : gamelib::core::charTile('#');
-}
-
-// Glassy crystal beside the box (within the wall-jump reach): no clinging.
-bool _glassBeside(const gamelib::core::TileMap& map, const Rect& box)
-{
-    for (const float dx : {-4.0f, box.width + 4.0f}) {
-        for (const float dy : {2.0f, box.height / 2.0f, box.height - 2.0f}) {
-            if (_tileAt(map, {box.x + dx, box.y + dy}) == '*') {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-// Thorns under or beside the feet: not a safe place to come back to.
-bool _nearThorns(const gamelib::core::TileMap& map, const Rect& box)
-{
-    for (const float dx : {-kTile, 0.0f, box.width / 2.0f, box.width, box.width + kTile}) {
-        const TileId id = _tileAt(map, {box.x + dx, box.bottom() + 2.0f});
-        if (id == '^' || id == 'L' || id == 'Q' || id == '=') {
-            return true;
-        }
-    }
-    return false;
+    return id == '^' || id == 'L' || id == 'Q' || id == '=';
 }
 
 } // namespace
@@ -73,23 +50,13 @@ void Session::stepHero(const Input& input)
     h.shootCooldown = std::max(0, h.shootCooldown - 1);
     h.shootPose = std::max(0, h.shootPose - 1);
 
-    const bool wasSwimming = h.swimming;
-    h.swimming = _tileAt(m_map, body.box.center()) == '~';
-    if (h.swimming != wasSwimming) {
-        m_events.push({.kind = EventKind::Splash, .at = {body.box.center().x, body.box.center().y}, .value = h.swimming ? 1 : 0});
-    }
-
     bool handled = false;
     stepPound(in, handled);
     if (m_phase != Phase::Playing) {
         return;
     }
     if (!handled) {
-        const bool cling = !_glassBeside(m_map, body.box);
-        const gamelib::core::PlatformerTuning tuning = heroTuning(m_progress.abilities, h.swimming, cling);
-        if (h.swimming) {
-            body.airJumpsLeft = 99; // every press a stroke
-        }
+        const gamelib::core::PlatformerTuning tuning = heroTuning(m_progress.abilities);
         const gamelib::core::PlatformerIntent intent{.move = static_cast<float>(in.move),
                                                      .climb = static_cast<float>(in.aim),
                                                      .jumpPressed = in.jumpPressed,
@@ -97,17 +64,18 @@ void Session::stepHero(const Input& input)
                                                      .dashPressed = in.dashPressed};
         const float xBefore = body.box.x;
         const gamelib::core::PlatformerStep step = gamelib::core::stepPlatformer(body, intent, tuning, world);
-        // Breaking the surface with jump held: a leap out of the water onto the bank.
-        if (h.swimming && _tileAt(m_map, body.box.center()) != '~' && body.velocity.y < 0.0f && in.jumpHeld) {
-            body.velocity.y = std::min(body.velocity.y, -kWaterLeap);
-            body.rising = false;
-        }
         const Vec2 feet = body.box.bottomCenter();
+        if (step.events.enteredWater || step.events.leftWater) {
+            m_events.push({.kind = EventKind::Splash, .at = body.box.center(), .value = step.events.enteredWater ? 1 : 0});
+        }
+        if (step.events.stroked) {
+            m_events.push({.kind = EventKind::Splash, .at = feet, .value = 2});
+        }
         if (step.events.jumped) {
             m_events.push({.kind = EventKind::Jump, .at = feet});
         }
         if (step.events.airJumped) {
-            m_events.push({.kind = h.swimming ? EventKind::Splash : EventKind::AirJump, .at = feet, .value = 2});
+            m_events.push({.kind = EventKind::AirJump, .at = feet, .value = 2});
         }
         if (step.events.wallJumped) {
             m_events.push({.kind = EventKind::WallJump, .at = feet, .value = body.facing});
@@ -127,9 +95,8 @@ void Session::stepHero(const Input& input)
             return;
         }
     }
-    if (body.grounded && !_nearThorns(m_map, body.box) && !h.pound.active()) {
-        h.safeFeet = body.box.bottomCenter();
-        h.safeRoom = m_room;
+    if (!h.pound.active()) {
+        h.safe.update(body, world, _unsafeFloor, m_room);
     }
     h.vulnerable.setHurtbox(body.box.expanded(-1.5f));
     stepSlash(in);
@@ -226,14 +193,17 @@ void Session::stepSlash(const Input& in)
                 }
             }
             pogo = true;
+        } else if (e.vulnerable.guardedHit(*hit)) {
+            // A shellback's shell: a tink, and a bounce off it from above.
+            m_events.push({.kind = EventKind::Deflect, .at = hit->box.center()});
+            pogo = true;
         }
     }
     if (m_boss && m_phase == Phase::Playing) {
         if (const auto landed = m_boss->vulnerable.tryHit(*hit)) {
             bossHurt(landed->damage, hit->box.center());
             pogo = true;
-        } else if (m_boss->vulnerable.guarded() && h.struckId != hit->attackId
-                   && gamelib::core::overlaps(hit->box, m_boss->vulnerable.hurtbox())) {
+        } else if (m_boss->vulnerable.guardedHit(*hit)) {
             m_events.push({.kind = EventKind::Deflect, .at = hit->box.center()});
             pogo = true;
         }
@@ -264,7 +234,7 @@ void Session::stepSlash(const Input& in)
     if (pogo && h.slashAim > 0 && !body.grounded) {
         gamelib::core::launch(body, {body.velocity.x, -kPogoSpeed}, true);
         body.dashReady = true;
-        body.airJumpsLeft = heroTuning(m_progress.abilities, false, true).airJumps;
+        body.airJumpsLeft = heroTuning(m_progress.abilities).airJumps;
         m_events.push({.kind = EventKind::Pogo, .at = body.box.bottomCenter()});
     }
 }

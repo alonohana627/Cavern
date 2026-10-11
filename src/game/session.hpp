@@ -143,10 +143,8 @@ struct Hero {
     int shootCooldown = 0;
     int shootPose = 0;
     int hurtTicks = 0;
-    bool swimming = false;
     float walked = 0.0f;
-    gamelib::core::Vec2 safeFeet; // the last floor stood on away from thorns
-    int safeRoom = 0;
+    gamelib::core::SafeGround safe; // the last floor stood on away from thorns
 };
 
 enum class EventKind {

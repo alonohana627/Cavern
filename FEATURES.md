@@ -26,9 +26,9 @@ What Cavern does today, verified by running it.
 - Persistent world state: opened doors, broken walls and floors, items
   taken, guardians beaten and rooms visited (GameLib's `WorldFlags` and
   `MapReveal`).
-- Water to swim in (light, slow, every jump press a stroke; a leap out of
-  the surface), thorns and lava that hurt and put the wanderer back on the
-  last safe floor.
+- Water to swim in (GameLib's swimming: light, slow, every jump press a
+  stroke, a leap out of the surface), thorns and lava that hurt and put the
+  wanderer back on the last safe floor (GameLib's `SafeGround`).
 - Signs and lore tablets read in a dialogue box, their key names following
   the player's bindings.
 - An offline explorer with the real controller (kept outside the

@@ -164,7 +164,9 @@ World::World()
 {
     m_shapes = gamelib::core::TileShapes{{'#', TileShape::Solid}, {'*', TileShape::Solid}, {'=', TileShape::OneWay},
                                          {'^', TileShape::Hazard}, {'L', TileShape::Hazard}, {'%', TileShape::Solid},
-                                         {'X', TileShape::Solid},  {'Q', TileShape::Solid},  {'Z', TileShape::Solid}};
+                                         {'X', TileShape::Solid},  {'Q', TileShape::Solid},  {'Z', TileShape::Solid},
+                                         {'~', TileShape::Water}};
+    m_shapes.setNoCling('*'); // glassy crystal: no wall slide or wall jump
     for (const char door : std::string_view{"D1234)(|"}) {
         m_shapes.set(gamelib::core::charTile(door), TileShape::Solid);
     }

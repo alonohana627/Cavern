@@ -127,7 +127,7 @@ int _heroPose(const game::Hero& h)
     if (h.hurtTicks > 0) {
         return 7;
     }
-    if (h.swimming) {
+    if (b.swimming) {
         return 8;
     }
     if (b.dashLeft > 0) {

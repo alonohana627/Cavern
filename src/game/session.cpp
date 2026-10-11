@@ -127,8 +127,7 @@ void Session::placeHero(const Vec2 feet)
     m_hero.body.box = Rect::fromBottomCenter(feet, kHeroSize);
     m_hero.body.velocity = {};
     m_hero.previous = m_hero.body.box;
-    m_hero.safeFeet = feet;
-    m_hero.safeRoom = world().roomAt(m_hero.body.box.center());
+    m_hero.safe.set(feet, world().roomAt(m_hero.body.box.center()));
     m_hero.vulnerable.setHurtbox(m_hero.body.box);
 }
 
@@ -191,19 +190,17 @@ bool Session::itemVisible(const int item) const
 
 int Session::stationInReach() const
 {
-    const Rect& box = m_hero.body.box;
+    std::vector<Vec2> points;
+    std::vector<int> indices;
     const auto& stations = world().stations();
     for (std::size_t i = 0; i < stations.size(); ++i) {
-        const Station& s = stations[i];
-        if (s.room != m_room) {
-            continue;
-        }
-        const Vec2 feet = _feetOf(s.cell);
-        if (std::abs(feet.x - box.center().x) <= kStationReach && std::abs(feet.y - box.bottom()) <= kTile) {
-            return static_cast<int>(i);
+        if (stations[i].room == m_room) {
+            points.push_back(_feetOf(stations[i].cell));
+            indices.push_back(static_cast<int>(i));
         }
     }
-    return -1;
+    const int found = gamelib::core::inReach(points, m_hero.body.box, {kStationReach, kTile});
+    return found < 0 ? -1 : indices[static_cast<std::size_t>(found)];
 }
 
 std::optional<int> Session::escapeTicksLeft() const
@@ -237,8 +234,8 @@ void Session::tick(const Input& input)
     case Phase::Scroll: scrollTick(); break;
     case Phase::Hazard:
         if (m_phaseTicks >= kHazardRespawnTicks) {
-            const int safeRoom = m_hero.safeRoom;
-            placeHero(m_hero.safeFeet);
+            const int safeRoom = m_hero.safe.room();
+            placeHero(m_hero.safe.feet());
             if (safeRoom != m_room) {
                 enterRoom(safeRoom, false);
             }
@@ -394,10 +391,7 @@ void Session::scrollTick()
         m_phaseTicks = 0;
         enterRoom(to, true);
         // Rising into the room above: a lift onto its floor beside the way up.
-        if (side == gamelib::core::Direction::Up) {
-            m_hero.body.velocity.y = std::min(m_hero.body.velocity.y, -kRoomLift);
-            m_hero.body.rising = false;
-        }
+        gamelib::core::liftIntoRoom(m_hero.body, side, kRoomLift);
     }
 }
 

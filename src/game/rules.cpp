@@ -15,11 +15,11 @@ const gamelib::core::InputCodec<Input>& inputCodec()
     return codec;
 }
 
-gamelib::core::PlatformerTuning heroTuning(const Abilities abilities, const bool swimming, const bool cling)
+gamelib::core::PlatformerTuning heroTuning(const Abilities abilities)
 {
     gamelib::core::PlatformerTuning t;
     // Quick starts and stops on the ground, a little less grip in the air.
-    t.maxSpeed = swimming ? kSwimSpeed : kRunSpeed;
+    t.maxSpeed = kRunSpeed;
     t.groundAccel = 0.32f;
     t.groundDecel = 0.45f;
     t.airAccel = 0.24f;
@@ -43,7 +43,7 @@ gamelib::core::PlatformerTuning heroTuning(const Abilities abilities, const bool
         t.dashTicks = 11;
         t.dashCooldown = 22;
     }
-    if (abilities.has(Ability::WallJump) && cling) {
+    if (abilities.has(Ability::WallJump)) {
         t.wallSlideSpeed = 1.1f;
         t.wallJumpSpeed = {2.5f, 4.2f};
         t.wallJumpLockTicks = 9;
@@ -53,18 +53,15 @@ gamelib::core::PlatformerTuning heroTuning(const Abilities abilities, const bool
         t.airJumps = 1;
         t.airJumpSpeed = 4.4f; // about 2.8 tiles more
     }
-    if (swimming) {
-        // Water: light and slow, every press a stroke upwards.
-        t.gravity *= 0.35f;
-        t.fallGravity = 1.0f;
-        t.maxFallSpeed = 1.5f;
-        t.airJumps = 99;
-        t.airJumpSpeed = 2.6f;
-        t.jumpSpeed = 3.2f;
-        t.coyoteTicks = 0;
-        t.airAccel = 0.18f;
-        t.airDecel = 0.12f;
-    }
+    // Water: light and slow, every press a stroke upwards, and a leap out
+    // of the surface with jump held onto a bank a tile above it.
+    t.swimStroke = 2.6f;
+    t.swimGravity = 0.35f;
+    t.swimFallSpeed = 1.5f;
+    t.swimSpeed = kSwimSpeed;
+    t.swimAccel = 0.18f;
+    t.swimDecel = 0.12f;
+    t.surfaceLeap = kWaterLeap;
     return t;
 }
 
