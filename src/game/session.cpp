@@ -675,7 +675,7 @@ void Session::sealRoom(const bool sealed)
         return;
     }
     m_seals = gamelib::core::sealBorder(m_map.layer(0), room().cells,
-                                        [](const TileId id) { return id == ' ' || id == '~'; }, gamelib::core::charTile('Z'));
+                                        [](const TileId id) { return id == ' ' || id == '~' || id == ','; }, gamelib::core::charTile('Z'));
 }
 
 void Session::startEscape()

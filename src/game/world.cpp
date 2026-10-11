@@ -248,10 +248,11 @@ void World::scanRoom(const int index)
                 layer.at(cell) = gamelib::core::charTile(c);
                 continue;
             }
-            // A marker leaves air behind it - or water when it sits in water.
-            const bool wet = (x > 0 && row[static_cast<std::size_t>(x - 1)] == '~')
-                             || (x + 1 < columns && row[static_cast<std::size_t>(x + 1)] == '~');
-            layer.at(cell) = gamelib::core::charTile(wet ? '~' : ' ');
+            // A marker leaves air behind it - or water (or shallows) when it sits in it.
+            const char before = x > 0 ? row[static_cast<std::size_t>(x - 1)] : ' ';
+            const char after = x + 1 < columns ? row[static_cast<std::size_t>(x + 1)] : ' ';
+            const char under = before == '~' || after == '~' ? '~' : (before == ',' || after == ',' ? ',' : ' ');
+            layer.at(cell) = gamelib::core::charTile(under);
             const std::string flag = "item." + _cellName(cell);
             switch (c) {
             case 'S': m_start = cell; break;

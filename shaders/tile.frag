@@ -15,7 +15,8 @@
 //   params  x kind (0 rock, 1 glass, 2 ledge, 3 thorns, 4 water, 5 cracked
 //           floor, 6 cracked wall, 7 collapsing floor, 8 lava, 9 seal),
 //           y area (0 ruins, 1 fungal, 2 flooded, 3 crystal, 4 core),
-//           z accent glow strength, w -
+//           z accent glow strength, w how far below the tile's usual
+//           water surface the surface sits (shallows)
 //   bits    neighbour mask | variant << 8 | cell x << 32 | cell y << 48
 
 layout(location = 0) in vec2 inUv;
@@ -217,7 +218,7 @@ void main()
         col += rim * smoothstep(0.85, 1.0, caustic) * 0.25;
         if ((mask & N) == 0u) {
             float wave = sin(world.x * 0.25 + time * 2.2) * 0.9 + sin(world.x * 0.11 - time * 1.3) * 0.7;
-            float surface = p.y + 6.0 - wave;
+            float surface = p.y + 6.0 - s.params.w - wave * (1.0 - s.params.w / 16.0);
             alpha *= coverage(-surface);
             col = mix(col, rim * 1.5, smoothstep(1.4, 0.0, abs(surface)) * 0.9);
         }

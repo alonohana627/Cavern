@@ -92,10 +92,12 @@ What Cavern does today, verified by running it.
 - Shader-drawn rock per area (sandstone blocks, mossy rock with glowcaps,
   wet stone with hanging weed, violet rock sprouting crystal, basalt with
   magma veins), glassy crystal, water, lava, thorns, ledges, cracked tiles
-  with visible cracks, collapsing flagstones, doors and seals.
+  with visible cracks, collapsing flagstones, doors and seals; ankle-deep
+  shallows on the floor of the Tidewarden's pool.
 - Three parallax layers per area: a dusk sky with stars, a moon and ruined
-  towers; giant glowing mushrooms; a drowned colonnade; crystal spires;
-  chimneys and lava falls; stalactites and stalagmites in front.
+  towers; giant glowing mushrooms; a drowned colonnade standing in rippling
+  water; crystal spires; chimneys and lava falls; stalactites and
+  stalagmites in front.
 - A hooded wanderer with a trailing scarf and a lamp; creatures and
   guardians as layered SDF bodies; items with pulsing auras.
 - Lights (the wanderer's lamp, shrines, items, glowing creatures and shots),

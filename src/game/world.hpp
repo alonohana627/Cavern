@@ -12,7 +12,8 @@
 // Tiles (the character is the tile id):
 //   ' ' air            '#' rock               '*' glassy crystal (no wall cling)
 //   '=' ledge (one-way, down + jump drops through)   '^' thorns (hurt, put back)
-//   '~' water (swim)   '%' cracked floor (a ground pound breaks it)
+//   '~' water (swim)   ',' shallows (drawn as water, walked through)
+//   '%' cracked floor (a ground pound breaks it)
 //   'X' cracked wall (a slash or a shot breaks it)
 //   'Q' a floor that collapses under the hero for good (the fall into the caves)
 //   'L' lava (deadly in the core)

@@ -179,13 +179,28 @@ void main()
         float d = sil.x;
         float a = coverage(d);
         vec3 col = main * (0.9 + 0.2 * valueNoise(q / 40.0));
-        // A rim light on the silhouettes' edges.
-        col = mix(col, high * 0.5, smoothstep(-6.0, 0.0, d) * 0.4);
+        // A rim light on the silhouettes' edges (wider and brighter on the
+        // drowned colonnade, whose blue stone would sink into the dark).
+        if (area == 2) {
+            col = mix(col * 1.25, high * 0.8, smoothstep(-10.0, 0.0, d) * 0.65);
+        } else {
+            col = mix(col, high * 0.5, smoothstep(-6.0, 0.0, d) * 0.4);
+        }
         c = vec4(col, a);
         if (sil.y < 1e2) {
             float pulse = 0.7 + 0.3 * sin(time * 1.2 + q.x * 0.01);
             vec4 glow = vec4(high * 1.1, glowFalloff(max(sil.y, 0.0), 40.0) * 0.5 * pulse);
             c = over(vec4(high * 1.3, coverage(sil.y) * 0.9 * pulse), over(glow, c));
+        }
+        if (area == 2) {
+            // The flood: the colonnade stands in water up to a rippling
+            // surface line, with caustics playing below it.
+            float wave = sin(q.x * 0.02 + time * 1.1) * 4.0 + sin(q.x * 0.007 - time * 0.7) * 6.0;
+            float below = q.y - (760.0 + wave);
+            float caustic = abs(sin(q.x * 0.035 + time * 0.9 + sin(q.y * 0.04 + time * 0.6)) * sin(q.y * 0.05 - time * 0.8));
+            vec3 waterC = main * 0.9 + high * (0.05 + smoothstep(0.8, 1.0, caustic) * 0.14);
+            c = over(vec4(waterC, coverage(-below) * coverage(q.y - 960.0) * 0.5), c); // down to the colonnade floor
+            c = over(vec4(high * 0.7, coverage(abs(below) - 1.5) * 0.6), c);
         }
     } else {
         // Near rock: stalactites hanging from the top and stalagmites rising from

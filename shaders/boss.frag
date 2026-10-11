@@ -76,8 +76,14 @@ void main()
         }
         float shell = sdEllipse(q - vec2(-2.0, 0.0), vec2(16.0, 9.5));
         shell = max(shell, q.y - 7.0);
+        // A cool halo and a pale rim lift the shell off the dark blue stone.
+        acc = layerGlow(acc, shell, glowC, 5.0, 0.35 + tell * 0.4);
         acc = layerOutlined(acc, shell, mainC, kInk, 0.9);
-        acc = layerFill(acc, max(sdEllipse(q - vec2(-4.0, -3.0), vec2(10.0, 4.0)), -1e3), mainC * 1.25);
+        // Darker underneath, lighter on top where it catches the light.
+        float top = smoothstep(4.0, -9.0, q.y);
+        acc = layerFill(acc, max(shell + 1.0, 0.5 - q.y), mainC * 0.75);
+        acc = layerFill(acc, max(sdEllipse(q - vec2(-4.0, -3.5), vec2(11.0, 4.6)), shell + 1.0), mix(mainC * 1.3, glowC, 0.35 + 0.25 * top));
+        acc = layerFill(acc, max(abs(shell + 1.4) - 0.55, q.y + 1.0), glowC * 1.35);
         for (int i = 0; i < 4; ++i) {
             acc = layerOutlined(acc, sdCircle(q - vec2(-12.0 + float(i) * 6.0, -8.5 + abs(float(i) - 1.5) * 0.8), 1.4), glowC, kInk, 0.4);
         }

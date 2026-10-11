@@ -71,6 +71,9 @@ const AreaTiles& _tiles(const Shapes& shapes, const game::Area area)
                       .params = {9.0f, a, 0.0f, 0.0f}, .group = 6});
     t.water.set('~', {.shape = shapes.tile, .color = pal[Role::Water], .color2 = srgb(0xBFEFFF),
                       .params = {4.0f, a, 0.0f, 0.0f}, .group = 1});
+    // Shallows: the same water, its surface 9 units lower (ankle-deep).
+    t.water.set(',', {.shape = shapes.tile, .color = pal[Role::Water], .color2 = srgb(0xBFEFFF),
+                      .params = {4.0f, a, 0.0f, 9.0f}, .group = 1});
     slot = t;
     return *slot;
 }
@@ -109,7 +112,7 @@ EnemyLook _bossLook(const game::BossKind kind)
     using B = game::BossKind;
     switch (kind) {
     case B::Sporemother: return {srgb(0x8A3A6A), srgb(0x9AFFB8)};
-    case B::Tidewarden: return {srgb(0x2E5C8A), srgb(0x9AE8FF)};
+    case B::Tidewarden: return {srgb(0x3F86B8), srgb(0xA8F0FF)};
     case B::Colossus: return {srgb(0x8A7A62), srgb(0xFFC060)};
     case B::PrismWyrm: return {srgb(0x5A3AA0), srgb(0xE29BFF)};
     case B::Heart: return {srgb(0x3A2420), srgb(0xFF6A1A)};

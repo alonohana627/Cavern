@@ -16,7 +16,7 @@ const AreaPalette& areaPalette(const game::Area area)
                               0x1A4A5A, 0x56747A}),
         // Flooded halls: drowned blue stone, pale foam.
         AreaPalette::fromHex({0x030914, 0x0A2040, 0x081830, 0x0C2440, 0x123052, 0x1C2A40, 0x5A86B0, 0x9FE8FF, 0x5AFFD8,
-                              0x1E6AA8, 0x34486A}),
+                              0x1E6AA8, 0x44608A}),
         // Crystal depths: violet dark, amethyst glass, cyan gleams.
         AreaPalette::fromHex({0x07040F, 0x1C0E34, 0x140A28, 0x1E1038, 0x2A1648, 0x261C38, 0x9A72D8, 0xE29BFF, 0x7AF2FF,
                               0x3A2A7A, 0x3E3458}),
