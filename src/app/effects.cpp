@@ -1,0 +1,236 @@
+#include "effects.hpp"
+
+#include "palette.hpp"
+
+#include <algorithm>
+#include <cmath>
+#include <numbers>
+
+namespace cavern::app {
+
+namespace {
+
+// helpers
+
+using gamelib::core::Rect;
+using gamelib::core::Vec2;
+using game::EventKind;
+
+
+} // namespace
+
+Effects::Effects()
+    : m_shards{600, {0.0f, 420.0f}, 0.4f, 0x51ED}
+    , m_sparks{{.start = 3.0f, .reach = 12.0f, .length = 3.0f, .thickness = 1.0f, .jitter = 0.25f}, 0x5A4C}
+    , m_dust{{.size = {1.6f, 3.0f}, .life = {0.3f, 0.5f}, .rise = {4.0f, 12.0f}, .jitter = 6.0f, .fanOut = 1.5f}, 0xD057}
+{
+}
+
+void Effects::clear()
+{
+    m_shards.clear();
+    m_sparks.clear();
+    m_dust.clear();
+    m_rings.clear();
+    m_shake.clear();
+    m_flash.clear();
+    m_motes.clear();
+}
+
+void Effects::burst(const Vec2 at, const int count, const Color color, const float speed, const float size)
+{
+    (void)m_shards.burst(at, count,
+                         {.speed = {speed * 0.4f, speed}, .size = {size * 0.6f, size}, .life = {0.35f, 0.7f},
+                          .spin = {-12.0f, 12.0f}, .color = color});
+}
+
+void Effects::react(const game::Event& e, const game::Session& session)
+{
+    const AreaPalette& pal = areaPalette(session.area());
+    const Color dust = pal[Role::RockEdge].withAlpha(0.7f);
+    switch (e.kind) {
+    case EventKind::Land: m_dust.burst(e.at, 4, 6.0f, {}, dust); break;
+    case EventKind::Jump: m_dust.burst(e.at, 3, 4.0f, {}, dust); break;
+    case EventKind::AirJump:
+        m_rings.add(e.at, 10.0f, srgb(0xBFE8FF, 0.8f), 0.3f);
+        m_sparks.burst(e.at, 6, srgb(0xBFE8FF), 0.25f);
+        break;
+    case EventKind::WallJump: m_dust.burst(e.at + Vec2{-6.0f * static_cast<float>(e.value), -8.0f}, 3, 3.0f, {}, dust); break;
+    case EventKind::Dash: m_dust.burst(e.at, 5, 5.0f, {-20.0f * static_cast<float>(e.value), 0.0f}, srgb(0x9AA8FF, 0.6f)); break;
+    case EventKind::Splash:
+        burst(e.at, 10, pal[Role::Water].scaled(1.6f).withAlpha(0.9f), 90.0f, 2.2f);
+        break;
+    case EventKind::SlashHit: m_sparks.burst(e.at, 5, srgb(0xFFF2C8), 0.2f); break;
+    case EventKind::Pogo: m_rings.add(e.at, 9.0f, srgb(0xFFF2C8, 0.8f), 0.25f); break;
+    case EventKind::Shoot: m_sparks.burst(e.at, 4, kAmmo, 0.18f); break;
+    case EventKind::PoundLand:
+        m_shake.trigger(e.value > 0 ? 1.0f : 0.7f);
+        m_dust.burst(e.at, 10, 18.0f, {}, dust);
+        m_rings.add(e.at, 30.0f, srgb(0xFFF2C8, 0.7f), 0.35f);
+        break;
+    case EventKind::Hurt:
+    case EventKind::HazardHit:
+        m_shake.trigger(0.6f);
+        m_flash.trigger(0.5f);
+        m_flashColor = srgb(0xFF2A2A, 0.35f);
+        m_sparks.burst(e.at, 8, kDanger, 0.3f);
+        break;
+    case EventKind::Death:
+        m_shake.trigger(1.0f);
+        burst(e.at, 40, kHeroTrim, 160.0f, 3.0f);
+        burst(e.at, 30, kHeroCloak.scaled(1.6f), 120.0f, 3.5f);
+        m_rings.add(e.at, 40.0f, srgb(0xFFFFFF, 0.8f), 0.6f);
+        break;
+    case EventKind::EnemyHit: m_sparks.burst(e.at, 6, srgb(0xFFE8B0), 0.22f); break;
+    case EventKind::EnemyDown:
+        burst(e.at, e.value > 0 ? 24 : 14, pal[Role::Accent], e.value > 0 ? 170.0f : 120.0f, 2.6f);
+        m_rings.add(e.at, e.value > 0 ? 34.0f : 16.0f, pal[Role::Accent].withAlpha(0.8f), 0.35f);
+        if (e.value > 0) {
+            m_shake.trigger(0.5f);
+        }
+        break;
+    case EventKind::Bomb:
+        burst(e.at, 16, srgb(0xFFB04A), 140.0f, 2.6f);
+        m_rings.add(e.at, 18.0f, srgb(0xFFD08A, 0.8f), 0.3f);
+        m_shake.trigger(0.3f);
+        break;
+    case EventKind::Deflect:
+    case EventKind::DoorLocked: m_sparks.burst(e.at, 5, srgb(0xC8D0FF), 0.2f); break;
+    case EventKind::DoorOpen:
+        m_dust.burst(e.at, 8, 10.0f, {}, dust);
+        m_shake.trigger(0.25f);
+        break;
+    case EventKind::Break:
+        burst(e.at, 26, pal[Role::RockEdge], 150.0f, 3.4f);
+        m_dust.burst(e.at, 10, 22.0f, {}, dust);
+        m_shake.trigger(0.6f);
+        break;
+    case EventKind::Item:
+        m_rings.add(e.at, 26.0f, kGold.withAlpha(0.9f), 0.5f);
+        m_sparks.burst(e.at, 12, kGold, 0.5f);
+        m_flash.trigger(0.4f);
+        m_flashColor = srgb(0xFFF4D0, 0.3f);
+        break;
+    case EventKind::Drop: m_sparks.burst(e.at, 4, kGold, 0.2f); break;
+    case EventKind::Saved:
+    case EventKind::Mapped:
+        m_rings.add(e.at - Vec2{0.0f, 12.0f}, 30.0f, pal[Role::Accent].withAlpha(0.8f), 0.6f);
+        m_flash.trigger(0.3f);
+        m_flashColor = pal[Role::Accent].withAlpha(0.25f);
+        break;
+    case EventKind::BossWake: m_shake.trigger(0.8f); break;
+    case EventKind::BossHit: m_sparks.burst(e.at, 7, srgb(0xFFE8B0), 0.25f); break;
+    case EventKind::BossLand:
+    case EventKind::Strike: m_shake.trigger(0.45f); break;
+    case EventKind::BossDown:
+        burst(e.at, 60, pal[Role::Accent], 220.0f, 3.5f);
+        m_rings.add(e.at, 60.0f, srgb(0xFFFFFF, 0.9f), 0.8f);
+        m_flash.trigger(1.0f);
+        m_flashColor = srgb(0xFFFFFF, 0.6f);
+        m_shake.trigger(1.0f);
+        break;
+    case EventKind::EscapeStart:
+        m_shake.trigger(1.0f);
+        m_flash.trigger(1.0f);
+        m_flashColor = srgb(0xFF7A2A, 0.5f);
+        break;
+    default: break;
+    }
+}
+
+void Effects::update(const float seconds, const game::Session& session, const Rect visible)
+{
+    m_shards.update(seconds);
+    m_sparks.update(seconds);
+    m_dust.update(seconds);
+    m_rings.update(seconds);
+    m_shake.update(seconds);
+    m_flash.update(seconds);
+    // Ambient motes: spores drift up in the fungal caves, drips fall in the
+    // flooded halls, glints hang in the crystal depths, embers rise in the core.
+    for (Mote& m : m_motes) {
+        m.age += seconds;
+        m.at += m.velocity * seconds;
+        if (m.kind == 1) {
+            m.velocity.y += 260.0f * seconds;
+        }
+    }
+    std::erase_if(m_motes, [&](const Mote& m) { return m.age >= m.life || !visible.expanded(40.0f).contains(m.at); });
+    const game::Area area = session.area();
+    const float rate = area == game::Area::Ruins ? 3.0f : 9.0f;
+    m_spawn += seconds * rate;
+    while (m_spawn >= 1.0f && m_motes.size() < 90) {
+        m_spawn -= 1.0f;
+        Mote m;
+        m.at = {visible.x + m_rng.uniform(0.0f, visible.width), visible.y + m_rng.uniform(0.0f, visible.height)};
+        m.age = 0.0f;
+        switch (area) {
+        case game::Area::Ruins:
+            m.kind = 4;
+            m.velocity = {m_rng.uniform(8.0f, 20.0f), m_rng.uniform(-2.0f, 2.0f)};
+            m.life = m_rng.uniform(3.0f, 6.0f);
+            m.size = m_rng.uniform(0.6f, 1.2f);
+            break;
+        case game::Area::Fungal:
+            m.kind = 0;
+            m.velocity = {m_rng.uniform(-4.0f, 4.0f), m_rng.uniform(-10.0f, -4.0f)};
+            m.life = m_rng.uniform(3.0f, 6.0f);
+            m.size = m_rng.uniform(0.8f, 1.6f);
+            break;
+        case game::Area::Flooded: {
+            // Drips fall from the ceiling of the view.
+            m.kind = 1;
+            m.at.y = visible.y + m_rng.uniform(0.0f, visible.height * 0.3f);
+            m.velocity = {0.0f, 20.0f};
+            m.life = 1.6f;
+            m.size = m_rng.uniform(0.8f, 1.2f);
+            break;
+        }
+        case game::Area::Crystal:
+            m.kind = 3;
+            m.velocity = {m_rng.uniform(-2.0f, 2.0f), m_rng.uniform(-3.0f, 3.0f)};
+            m.life = m_rng.uniform(1.5f, 3.5f);
+            m.size = m_rng.uniform(0.7f, 1.4f);
+            break;
+        case game::Area::Core:
+        case game::Area::Count:
+            m.kind = 2;
+            m.velocity = {m_rng.uniform(-6.0f, 6.0f), m_rng.uniform(-28.0f, -10.0f)};
+            m.life = m_rng.uniform(1.5f, 3.0f);
+            m.size = m_rng.uniform(0.6f, 1.3f);
+            break;
+        }
+        m_motes.push_back(m);
+    }
+}
+
+void Effects::drawAmbient(gamelib::draw::DrawList& list, const game::Area area, const float time) const
+{
+    const AreaPalette& pal = areaPalette(area);
+    for (const Mote& m : m_motes) {
+        const float t = m.age / m.life;
+        const float fade = std::min(1.0f, std::min(t * 4.0f, (1.0f - t) * 3.0f));
+        Color c = pal[Role::Accent];
+        switch (m.kind) {
+        case 1: c = pal[Role::Water].scaled(2.2f); break;
+        case 3: c = (std::sin(time * 6.0f + m.at.x) > 0.0f ? pal[Role::Accent] : pal[Role::Accent2]).scaled(1.4f); break;
+        case 4: c = pal[Role::RockEdge]; break;
+        default: break;
+        }
+        if (m.kind == 1) {
+            list.box(Rect::fromCenter(m.at, {m.size * 0.7f, m.size * 2.4f}), c.withAlpha(0.7f * fade), {.cornerRadius = 0.5f});
+        } else {
+            list.circle(m.at, m.size, c.withAlpha(0.8f * fade), {.glowWidth = m.size * 2.0f, .glowColor = c.withAlpha(0.3f * fade)});
+        }
+    }
+}
+
+void Effects::drawWorld(gamelib::draw::DrawList& list) const
+{
+    m_dust.draw(list);
+    m_shards.draw(list, {}, {.aspect = 0.7f, .cornerRadius = 0.4f, .endScale = 0.3f});
+    m_rings.draw(list, {.startScale = 0.3f, .startWidth = 2.0f, .endWidth = 0.6f});
+    m_sparks.draw(list);
+}
+
+} // namespace cavern::app

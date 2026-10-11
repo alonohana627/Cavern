@@ -1,39 +1,40 @@
 # Cavern
 
-A game built on [GameLib](../GameLib) - generated from its new-game template.
+A small Metroidvania built on [GameLib](https://github.com/alonohana627/GameLib):
+a hooded wanderer falls through the floor of a ruined court into the caves
+below and must find a way back to the daylight. One connected world in five
+areas - the surface ruins, the fungal caves, the flooded halls, the crystal
+depths and the core - opens up as the wanderer finds abilities. Everything on
+screen is drawn by shaders; every sound and the music are synthesized.
 
-Steer the glowing orb with WASD or the arrow keys and bump the edges as
-often as you can in 30 seconds; Space changes its color, Escape or P pauses,
-F11 toggles fullscreen. Everything on screen is drawn by shaders; the sounds
-are synthesized. Settings and the best score are kept in
-`cavern.ini` in the user data folder (`%APPDATA%\Cavern` on
-Windows; the environment variable `CAVERN_DATA_DIR` moves it).
+## Controls
+
+| Action | Keys | Gamepad |
+|---|---|---|
+| Move | Arrows / A D | D-pad, left stick |
+| Jump (hold for height) | Z, Space, K | A |
+| Slash (hold Up / Down to aim) | X, J | X |
+| Shoot a spark bolt | C, I | Y |
+| Dash (once found) | Left Shift, L | RB, B |
+| Read a sign, rest at a shrine, study a map | Up / W | D-pad up |
+| Map | M, Tab | Back |
+| Pause | Escape, P | Start |
+
+All keys can be rebound under CONTROLS. F11 toggles fullscreen.
 
 ## Build and run
 
 Requirements are GameLib's (C++26 Clang, CMake 3.28+, Ninja, Vulkan 1.3,
-glslc). GameLib is found at `../GameLib` relative to this folder; to use
-another checkout add `-DFETCHCONTENT_SOURCE_DIR_GAMELIB=<path>` to the
-configure command.
+glslc). GameLib is downloaded from GitHub at the commit pinned in
+`CMakeLists.txt`.
 
 ```powershell
 cmake --preset debug
 cmake --build --preset debug
-build/debug/bin/cavern.exe
-ctest --preset debug    # smoke test: 120 frames with the validation layer
+build/debug/bin/cavern.exe          # --demo plays the recorded demo
+ctest --preset debug                # smoke run: 120 frames with the validation layer
 ```
 
-## Where to start
-
-- `src/main.cpp`: the game - `tick()` simulates at a fixed 120 Hz, `frame()`
-  runs once per frame for effects, `draw()` fills the draw list. The title,
-  pause and game-over menus are GameLib's `app::ArcadeMenus`, the settings
-  file its `app::ArcadeProfile` (settings and named bests; keys of the game's
-  own through `openArcadeProfile<Keys>`). A game with more to keep than these settings
-  and bests (a save game) keeps its own `storage::Persisted<T>` (with
-  `app::StandardSettings` inside) and still uses `ArcadeMenus`: its own
-  settings go on the title menu after PLAY (the constructor's third
-  argument), and `setGameOverTitle` names a round that was won.
-- `shaders/orb.frag`: a custom shape; add more with `gamelib_add_shaders()` in
-  `CMakeLists.txt` and `renderer().addShape()`.
-- GameLib's docs: `GETTING_STARTED.md`, `RENDERING.md`, `EXTENDING_GAMELIB.md`.
+Settings and bests are kept in `cavern.ini`, the three journeys in
+`saves/cavern-<n>.sav` in the user data folder (`%APPDATA%\Cavern` on
+Windows; `CAVERN_DATA_DIR` moves them).

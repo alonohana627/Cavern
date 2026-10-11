@@ -36,12 +36,7 @@ if(GIT_FOUND)
     message(STATUS "Cavern: using GameLib ${_gamelib_revision} from ${gamelib_SOURCE_DIR}")
 endif()
 
-add_executable(cavern src/main.cpp)
-target_link_libraries(cavern PRIVATE GameLib::app GameLib::fx)
-gamelib_target_warnings(cavern)
-gamelib_copy_runtime(cavern)
-# The game's own procedural shapes, embedded as SPIR-V.
-gamelib_add_shaders(cavern SHADERS shaders/orb.frag)
+add_subdirectory(src)
 
 # Smoke test: launch, render 120 frames with the validation layer required,
 # exit cleanly. Exit code 77 (no Vulkan GPU) counts as skipped. The profile
