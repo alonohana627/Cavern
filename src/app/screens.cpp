@@ -285,16 +285,16 @@ void CavernGame::drawMapScreen(gamelib::draw::DrawList& list, const game::Sessio
     const Rect panel{80.0f, 90.0f, 1760.0f, 880.0f};
     gamelib::ui::drawPanel(list, panel, _panel());
     gamelib::draw::drawVectorText(list, "MAP", 960.0f, 110.0f, {.size = 54.0f, .color = kGold, .weight = 1.5f, .align = Align::Center});
-    drawMinimap(list, s, panel.expanded(-50.0f).expanded(0.0f), true, time);
+    drawMinimap(list, s, {panel.x + 50.0f, panel.y + 90.0f, panel.width - 100.0f, panel.height - 120.0f}, true, time);
     const std::string info = std::string{game::areaName(s.area())} + "  -  " + std::string{s.room().def->name}
                              + "      ITEMS " + std::to_string(s.progress().itemsTaken()) + "/"
                              + std::to_string(game::world().itemCount()) + "  (" + std::to_string(s.progress().completion())
                              + "%)      TIME " + _clock(s.progress().ticks);
-    list.text(info, 960.0f, 1000.0f, {.pixelSize = 4.0f, .color = kText, .align = Align::Center, .shadow = true});
-    list.text("SHRINE", 1280.0f, 900.0f, {.pixelSize = 3.0f, .color = srgb(0x7DFFB0)});
-    list.text("MAP", 1420.0f, 900.0f, {.pixelSize = 3.0f, .color = srgb(0xFFD27A)});
-    list.text("GUARDIAN", 1520.0f, 900.0f, {.pixelSize = 3.0f, .color = kDanger});
-    list.text("ITEM", 1700.0f, 900.0f, {.pixelSize = 3.0f, .color = kGold});
+    list.text(info, 960.0f, 990.0f, {.pixelSize = 4.0f, .color = kText, .align = Align::Center, .shadow = true});
+    list.text("SHRINE", 711.0f, 1036.0f, {.pixelSize = 3.0f, .color = srgb(0x7DFFB0)});
+    list.text("MAP", 859.0f, 1036.0f, {.pixelSize = 3.0f, .color = srgb(0xFFD27A)});
+    list.text("GUARDIAN", 953.0f, 1036.0f, {.pixelSize = 3.0f, .color = kDanger});
+    list.text("ITEM", 1137.0f, 1036.0f, {.pixelSize = 3.0f, .color = kGold});
 }
 
 void CavernGame::drawSlots(gamelib::draw::DrawList& list, const float time) const
@@ -361,9 +361,9 @@ void CavernGame::drawEnding(gamelib::draw::DrawList& list, const float time) con
     const Rect canvas{0.0f, 0.0f, static_cast<float>(m_canvas.width), static_cast<float>(m_canvas.height)};
     // Dawn over the ruins: a warm sky and the silhouettes.
     list.add({.rect = canvas, .color = srgb(0x2A3A6A), .color2 = srgb(0xFFB070), .shape = m_shapes.backdrop,
-              .params = {time * 6.0f, 0.0f, 0.0f, 0.0f}});
+              .params = {time * 6.0f, 0.0f, 5.0f, 0.0f}});
     list.add({.rect = canvas, .color = srgb(0x1A1A2E), .color2 = srgb(0xFFD08A), .shape = m_shapes.backdrop,
-              .params = {time * 10.0f, 0.0f, 0.0f, 1.0f}});
+              .params = {time * 10.0f, 0.0f, 5.0f, 1.0f}});
     const float k = std::min(1.0f, m_endingTime / 2.0f);
     gamelib::draw::drawVectorText(list, "INTO THE DAYLIGHT", 960.0f, 140.0f,
                                   {.size = 90.0f, .color = kGold.withAlpha(k), .weight = 1.8f, .align = Align::Center,
@@ -375,7 +375,7 @@ void CavernGame::drawEnding(gamelib::draw::DrawList& list, const float time) con
     const float k2 = std::clamp((m_endingTime - 1.5f) / 1.5f, 0.0f, 1.0f);
     const Rect panel{560.0f, 470.0f, 800.0f, 380.0f};
     gamelib::ui::PanelStyle style = _panel();
-    style.fill = style.fill.withAlpha(0.85f * k2);
+    style.fill = style.fill.withAlpha(0.98f * k2);
     style.border = style.border.withAlpha(k2);
     gamelib::ui::drawPanel(list, panel, style);
     const auto row = [&](const float y, const std::string& label, const std::string& value, const Color c) {

@@ -112,6 +112,10 @@ void main()
     vec2 uv = inUv;
     int area = int(s.params.z + 0.5);
     int layer = int(s.params.w + 0.5);
+    const bool dawn = area == 5; // the ending: the ruins at sunrise
+    if (dawn) {
+        area = 0;
+    }
     if (area != 0 && layer > 0) {
         q.y = mod(q.y, 1080.0); // the caves repeat downwards: every room has a floor and a ceiling
     }
@@ -130,9 +134,16 @@ void main()
             vec2 sp = (fract(q / cellSize) - 0.5) * cellSize;
             float tw = 0.6 + 0.4 * sin(time * 2.0 + star * 40.0);
             col += vec3(0.9, 0.9, 1.0) * step(0.93, star) * coverage(length(sp) - 1.2) * tw * (1.0 - uv.y);
-            float moon = length(q - vec2(1450.0, 240.0)) - 70.0;
-            col = mix(col, vec3(1.0, 0.95, 0.85), coverage(moon) * 0.9);
-            col += vec3(0.6, 0.55, 0.7) * glowFalloff(moon, 180.0) * 0.25;
+            if (dawn) {
+                // A low sun rising behind the ruins.
+                float sun = length(inUv * s.size - vec2(1440.0, 860.0)) - 80.0;
+                col += vec3(1.0, 0.7, 0.35) * glowFalloff(sun, 520.0) * 0.6;
+                col = mix(col, vec3(1.8, 1.4, 0.9), coverage(sun));
+            } else {
+                float moon = length(q - vec2(1450.0, 240.0)) - 70.0;
+                col = mix(col, vec3(1.0, 0.95, 0.85), coverage(moon) * 0.9);
+                col += vec3(0.6, 0.55, 0.7) * glowFalloff(moon, 180.0) * 0.25;
+            }
             float cloud = fbm(vec2(q.x * 0.002 + time * 0.01, q.y * 0.008), 4);
             col = mix(col, high * 1.2, smoothstep(0.55, 0.8, cloud) * 0.35 * smoothstep(0.2, 0.6, uv.y));
             c = vec4(dither(col, gl_FragCoord.xy, 0.05), 1.0);
