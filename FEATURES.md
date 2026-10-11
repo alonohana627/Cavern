@@ -34,6 +34,11 @@ What Cavern does today, verified by running it.
 - An offline explorer with the real controller (kept outside the
   repository) reaches every room, every item and the way out in the
   intended order: dash, cling claws, quake stomp, echo wings.
+- Offline boss trials (kept outside the repository) with the abilities and
+  upgrades a player has by then: a lookahead bot that rates short plans by
+  damage dealt against damage taken beats the Molten Heart 6 of 6 without
+  dying, and the Sporemother, Tidewarden and Gate Colossus 6 of 6; a simpler
+  chasing bot beats the Prism Wyrm 5 of 6.
 
 ## The wanderer
 
