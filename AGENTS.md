@@ -105,6 +105,9 @@ crystal ('*') cannot be clung to, so double-jump ledges are glass.
 - `CAVERN_REPLAY=<file>`: a recording (`core::InputRecording` text, the
   seven-character inputs of `rules.hpp`) drives the run. These are GameLib's
   `app::readDevStart("CAVERN")`.
+- `CAVERN_SCENE=ability0`..`ability3` (an "ability get" scene), `map` (every
+  room revealed), `escape` (the heart beaten, the escape running; best with
+  `CAVERN_START_LEVEL=55`) or `ending`: a look at those scenes from PLAY.
 - `--demo`: the recorded demo plays full screen. `--keep-running`: the game
   keeps running without focus, for screenshot scripts.
 - `CAVERN_DATA_DIR`: where `cavern.ini` and the `saves` folder live.

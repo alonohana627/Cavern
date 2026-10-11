@@ -237,8 +237,11 @@ void Session::tick(const Input& input)
     case Phase::Scroll: scrollTick(); break;
     case Phase::Hazard:
         if (m_phaseTicks >= kHazardRespawnTicks) {
-            m_room = m_hero.safeRoom;
+            const int safeRoom = m_hero.safeRoom;
             placeHero(m_hero.safeFeet);
+            if (safeRoom != m_room) {
+                enterRoom(safeRoom, false);
+            }
             m_hero.vulnerable.makeInvincible(kHurtInvincibleTicks);
             m_phase = Phase::Playing;
             m_phaseTicks = 0;
@@ -713,6 +716,14 @@ void Session::grantAll()
         m_progress.abilities.add(static_cast<Ability>(a));
     }
     m_progress.keys = 0x0F;
+}
+
+void Session::debugEscape()
+{
+    for (const BossDef& def : world().bosses()) {
+        m_progress.flags.set(def.flag);
+    }
+    startEscape();
 }
 
 void Session::debugRevealAll()

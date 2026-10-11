@@ -236,6 +236,8 @@ public:
     void debugAbilityScene(Ability ability);
     // Every room of the map visited (a look at the whole map screen).
     void debugRevealAll();
+    // The heart beaten and the escape running (a look at the escape).
+    void debugEscape();
 
 private:
     void applyFlags();

@@ -243,7 +243,7 @@ void WorldView::drawHero(gamelib::draw::DrawList& list, const Shapes& shapes, co
     if (hero.slash.busy() && hero.slash.phase() != gamelib::core::AttackPhase::Startup) {
         const Rect hit = hero.slash.hitbox(box.center());
         const float rotation = hero.slashAim < 0 ? -kPi / 2.0f : (hero.slashAim > 0 ? kPi / 2.0f : (hero.slash.facing() < 0 ? kPi : 0.0f));
-        const float size = std::max(hit.width, hit.height) + 8.0f;
+        const float size = std::max(hit.width, hit.height) + 18.0f;
         list.add({.rect = Rect::fromCenter(hit.center(), {size, size}),
                   .color = kHeroTrim,
                   .color2 = srgb(0xBFE4FF),
