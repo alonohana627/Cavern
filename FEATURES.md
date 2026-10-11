@@ -34,3 +34,9 @@ What Cavern does today, verified by running it.
   parallax layers per area), lights and bloom.
 - Title menu (GameLib's `ArcadeMenus`), three save slots, area banners,
   masks, bolts and a minimap.
+- The attract demo: a recorded run (GameLib's `InputRecording` and
+  `Playback`) through the cliff road, the colonnade door, the collapsing
+  court and the long fall to the first shrine, behind the title menu and
+  full screen with `--demo`.
+- Five guardians with wind-ups, phases and strikes announced from above;
+  the room seals while they fight; a boss bar on a plate below the floor.

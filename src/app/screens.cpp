@@ -208,11 +208,13 @@ void CavernGame::drawHud(gamelib::draw::DrawList& list, const game::Session& s, 
     drawMinimap(list, s, mini, false, time);
     // The guardian's bar.
     if (const game::Boss* boss = s.boss()) {
-        const Rect bar{460.0f, 1000.0f, 1000.0f, 22.0f};
+        // On a dark plate in the band below the floor line, never on the playfield.
+        gamelib::ui::drawPanel(list, {420.0f, 984.0f, 1080.0f, 86.0f}, _panel());
+        const Rect bar{460.0f, 1036.0f, 1000.0f, 20.0f};
         gamelib::ui::drawBar(list, bar, static_cast<float>(boss->shown) / static_cast<float>(std::max(boss->maxHp, 1)),
                              {.background = srgb(0x0A0C14, 0.9f), .fill = kDanger, .trail = srgb(0xFFE08A)});
-        gamelib::draw::drawVectorText(list, game::bossName(boss->kind), 960.0f, 954.0f,
-                                      {.size = 34.0f, .color = kText, .weight = 1.3f, .align = Align::Center,
+        gamelib::draw::drawVectorText(list, game::bossName(boss->kind), 960.0f, 994.0f,
+                                      {.size = 30.0f, .color = kText, .weight = 1.3f, .align = Align::Center,
                                        .shadow = {.color = kInk, .offset = {3.0f, 3.0f}}});
     }
     // The escape clock.
