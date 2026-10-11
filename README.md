@@ -16,6 +16,7 @@ screen is drawn by shaders; every sound and the music are synthesized.
 | Slash (hold Up / Down to aim) | X, J | X |
 | Shoot a spark bolt | C, I | Y |
 | Dash (once found) | Left Shift, L | RB, B |
+| Ground pound (once found) | Down + Jump in the air | Down + A |
 | Read a sign, rest at a shrine, study a map | Up / W | D-pad up |
 | Map | M, Tab | Back |
 | Pause | Escape, P | Start |
