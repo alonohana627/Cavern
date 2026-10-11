@@ -84,21 +84,21 @@ EnemyLook _enemyLook(const game::EnemyKind kind)
 {
     using K = game::EnemyKind;
     switch (kind) {
-    case K::Crawler: return {srgb(0x6A5A8A), srgb(0xFFD27A)};
-    case K::Bat: return {srgb(0x4A4058), srgb(0xFF6A5A)};
+    case K::Crawler: return {srgb(0x8E7CB4), srgb(0xFFD27A)};
+    case K::Bat: return {srgb(0x6E6088), srgb(0xFF6A5A)};
     case K::Sentry: return {srgb(0x8A7E6A), srgb(0xFF9A3A)};
     case K::SporePuff: return {srgb(0x7A5A9A), srgb(0x9AFFB0)};
     case K::Hopper: return {srgb(0xC0504A), srgb(0xFFE6A0)};
     case K::Creeper: return {srgb(0x4E7A4A), srgb(0xD8FF7A)};
-    case K::Eel: return {srgb(0x2A5A7A), srgb(0x7AF0FF)};
+    case K::Eel: return {srgb(0x3A7AA0), srgb(0x7AF0FF)};
     case K::Shellback: return {srgb(0x3A6A8A), srgb(0x8AB8D0)};
     case K::Jelly: return {srgb(0x5A8AD8), srgb(0x9AE8FF)};
-    case K::Shardling: return {srgb(0x3A2A58), srgb(0xD28AFF)};
+    case K::Shardling: return {srgb(0x6A54A0), srgb(0xD28AFF)};
     case K::PrismEye: return {srgb(0x6A4AA8), srgb(0x7AF2FF)};
-    case K::Moth: return {srgb(0x2A2238), srgb(0xE6A8FF)};
-    case K::Wisp: return {srgb(0x8A2A10), srgb(0xFF8A2A)};
-    case K::Drone: return {srgb(0x3A3030), srgb(0xFFB04A)};
-    case K::Lobber: return {srgb(0x4A2A22), srgb(0xFF6A1A)};
+    case K::Moth: return {srgb(0x58487A), srgb(0xE6A8FF)};
+    case K::Wisp: return {srgb(0xB04018), srgb(0xFF8A2A)};
+    case K::Drone: return {srgb(0x7A6A66), srgb(0xFFB04A)};
+    case K::Lobber: return {srgb(0x84503C), srgb(0xFF6A1A)};
     case K::Count: break;
     }
     return {srgb(0x808080), srgb(0xFFFFFF)};
