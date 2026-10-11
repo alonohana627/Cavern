@@ -12,8 +12,8 @@ const AreaPalette& areaPalette(const game::Area area)
         AreaPalette::fromHex({0x0D1430, 0x4A3E6A, 0x1A1F3E, 0x2A2C4E, 0x3A3654, 0x4E4658, 0xB8A27E, 0xFFC86A, 0x8AB8FF,
                               0x2A5A8A, 0x8C8AB0}),
         // Fungal caves: deep teal dark, mossy rock, glowing caps.
-        AreaPalette::fromHex({0x040B0E, 0x0C2226, 0x0A1A1E, 0x10282A, 0x163234, 0x1E2E2C, 0x4E8A5A, 0x7DFFB0, 0xD27BFF,
-                              0x1A4A5A, 0x3A5058}),
+        AreaPalette::fromHex({0x03080A, 0x0A1C20, 0x07131A, 0x0B1E22, 0x10282A, 0x34524A, 0x86D49A, 0x7DFFB0, 0xD27BFF,
+                              0x1A4A5A, 0x56747A}),
         // Flooded halls: drowned blue stone, pale foam.
         AreaPalette::fromHex({0x030914, 0x0A2040, 0x081830, 0x0C2440, 0x123052, 0x1C2A40, 0x5A86B0, 0x9FE8FF, 0x5AFFD8,
                               0x1E6AA8, 0x34486A}),
