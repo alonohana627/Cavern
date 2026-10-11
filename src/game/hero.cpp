@@ -220,7 +220,10 @@ void Session::stepSlash(const Input& in)
         if (const auto landed = e.vulnerable.tryHit(*hit)) {
             enemyHurt(e, landed->damage, e.body.box.center());
             if (e.hp > 0) {
-                e.body.velocity.x += landed->knockback.x;
+                // Knocked back a step (heavy sentries and lobbers stand firm).
+                if (e.kind != EnemyKind::Sentry && e.kind != EnemyKind::Lobber && e.kind != EnemyKind::Shellback) {
+                    e.body.box = gamelib::core::moveBox(e.body.box, {landed->knockback.x * 5.0f, landed->knockback.y * 3.0f}, tileWorld()).box;
+                }
             }
             pogo = true;
         }
