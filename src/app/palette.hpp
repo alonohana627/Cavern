@@ -50,7 +50,7 @@ inline const Color kGold = srgb(0xFFD27A);
 inline const Color kHealth = srgb(0xF0EEE6);
 inline const Color kAmmo = srgb(0x7FE3FF);
 inline const Color kDanger = srgb(0xFF5A5A);
-inline const Color kHeroCloak = srgb(0x2B3A67);
+inline const Color kHeroCloak = srgb(0x3A4F8E);
 inline const Color kHeroTrim = srgb(0xE8E2CF);
 
 } // namespace cavern::app

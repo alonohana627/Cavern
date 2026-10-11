@@ -18,7 +18,7 @@ layout(location = 0) out vec4 outColor;
 
 const vec3 kInk = vec3(0.02, 0.02, 0.05);
 const vec3 kScarf = vec3(0.78, 0.13, 0.12);
-const vec3 kEyes = vec3(2.2, 1.35, 0.35);
+const vec3 kEyes = vec3(1.5, 1.0, 0.3);
 const vec3 kLamp = vec3(2.4, 1.6, 0.6);
 const float kPi = 3.14159265;
 
@@ -123,15 +123,19 @@ void main()
     // The face plate and eyes.
     vec2 f = h - vec2(1.6, 0.6);
     float face = sdEllipse(f, vec2(2.6, 3.0));
-    acc = layerFill(acc, face, trim);
+    acc = layerFill(acc, face, vec3(0.05, 0.05, 0.09)); // the shadow inside the hood
+    acc = layerFill(acc, abs(face + 0.35) - 0.35, trim * 0.6); // its pale rim
     float blink = step(0.06, fract(time * 0.23 + 0.31));
     float eyes = min(sdEllipse(f - vec2(-0.2, -0.3), vec2(0.45, 0.9 * blink + 0.1)),
                      sdEllipse(f - vec2(1.5, -0.3), vec2(0.45, 0.9 * blink + 0.1)));
     if (pose == 7) {
         eyes = min(sdSegment(f, vec2(-0.6, -0.8), vec2(0.4, 0.2), 0.3), sdSegment(f, vec2(1.0, -0.8), vec2(2.0, 0.2), 0.3));
     }
-    acc = layerGlow(acc, eyes, kEyes, 2.0, 0.6);
+    acc = layerGlow(acc, eyes, kEyes, 1.2, 0.35);
     acc = layerFill(acc, eyes, kEyes);
+    // A faint pale rim around the silhouette keeps the dark cloak readable on dark rock.
+    float sil = min(min(legs, boots), min(body - 0.4, hood)) - 0.8;
+    acc = over(acc, vec4(vec3(0.75, 0.82, 1.0), glowFalloff(max(sil, 0.0), 2.2) * 0.45 * step(0.0, sil)));
     if (glow > 0.0) {
         float aura = sdRoundBox(b - vec2(0.0, -11.0), vec2(5.5, 11.0), 5.0);
         acc = over(acc, vec4(vec3(1.4, 1.2, 0.7), glowFalloff(max(aura, 0.0), 8.0) * glow * 0.8));
