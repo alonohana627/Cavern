@@ -339,6 +339,8 @@ void CavernGame::startSlot(gamelib::app::App& app, const int slot)
         if (name.starts_with("ability") && name.size() == 8) {
             m_session->debugAbilityScene(static_cast<game::Ability>(std::clamp(name[7] - '0', 0, game::kAbilityCount - 1)));
             m_banners.clear();
+        } else if (name == "map") {
+            m_session->debugRevealAll();
         } else if (name == "ending") {
             startEnding(app);
         }

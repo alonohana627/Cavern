@@ -161,7 +161,8 @@ void main()
         }
         if (area == 4) {
             float vein = abs(warpedNoise(world / 22.0, 1.4, 3) - 0.5);
-            float v = smoothstep(0.035, 0.0, vein) * (0.6 + 0.4 * sin(time * 1.5 + world.x * 0.05));
+            float patchMask = smoothstep(0.5, 0.75, valueNoise(world / 70.0 + vec2(13.0, 7.0)));
+            float v = smoothstep(0.016, 0.0, vein) * patchMask * (0.6 + 0.4 * sin(time * 1.5 + world.x * 0.05));
             col = mix(col, vec3(1.6, 0.55, 0.15) * (1.0 + glow), v * 0.9);
         }
         if (kind == 5 || kind == 6) {

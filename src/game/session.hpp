@@ -234,6 +234,8 @@ public:
     void debugStartIn(int room);
     // The "ability get" scene for `ability`, as if just picked up.
     void debugAbilityScene(Ability ability);
+    // Every room of the map visited (a look at the whole map screen).
+    void debugRevealAll();
 
 private:
     void applyFlags();

@@ -21,7 +21,7 @@ const AreaPalette& areaPalette(const game::Area area)
         AreaPalette::fromHex({0x07040F, 0x1C0E34, 0x140A28, 0x1E1038, 0x2A1648, 0x261C38, 0x9A72D8, 0xE29BFF, 0x7AF2FF,
                               0x3A2A7A, 0x3E3458}),
         // The core: black basalt, magma light.
-        AreaPalette::fromHex({0x0A0304, 0x2E0A08, 0x1E0806, 0x2A0C08, 0x3A120C, 0x2A1E1E, 0xA8503A, 0xFF7A2A, 0xFFD04A,
+        AreaPalette::fromHex({0x0A0304, 0x2E0A08, 0x1E0806, 0x2A0C08, 0x3A120C, 0x3E2C28, 0xC8643E, 0xFF7A2A, 0xFFD04A,
                               0xFF5A1A, 0x58342E}),
     };
     return palettes[static_cast<std::size_t>(area)];

@@ -715,6 +715,13 @@ void Session::grantAll()
     m_progress.keys = 0x0F;
 }
 
+void Session::debugRevealAll()
+{
+    for (const RoomInfo& r : world().rooms()) {
+        (void)m_progress.reveal.visitArea(r.def->corner, r.def->size);
+    }
+}
+
 void Session::debugAbilityScene(const Ability ability)
 {
     m_progress.abilities.add(ability);
