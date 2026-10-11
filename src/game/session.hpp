@@ -248,7 +248,7 @@ private:
     void touchItems();
     void useStation();
     void hurtHero(int damage, const gamelib::core::Rect& source);
-    void hazardHit();
+    void hazardHit(int damage);
     void die();
     void openDoor(int door);
     void breakPatch(int patch);

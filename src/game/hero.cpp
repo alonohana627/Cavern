@@ -123,11 +123,7 @@ void Session::stepHero(const Input& input)
             m_collapse.touch(gamelib::core::cellsBelow(body.box, kTile));
         }
         if (step.contacts.hazard) {
-            if (m_map.layer(0).at(step.contacts.hazardCell) == 'L') {
-                die();
-            } else {
-                hazardHit();
-            }
+            hazardHit(m_map.layer(0).at(step.contacts.hazardCell) == 'L' ? 2 : 1); // lava burns deeper
             return;
         }
     }
@@ -156,11 +152,7 @@ void Session::stepPound(const Input& in, bool& handled)
     handled = true;
     const gamelib::core::PoundStep step = h.pound.step(body, kPound, tileWorld());
     if (step.contacts.hazard) {
-        if (m_map.layer(0).at(step.contacts.hazardCell) == 'L') {
-            die();
-        } else {
-            hazardHit();
-        }
+        hazardHit(m_map.layer(0).at(step.contacts.hazardCell) == 'L' ? 2 : 1);
         return;
     }
     if (!step.landed) {
@@ -236,6 +228,10 @@ void Session::stepSlash(const Input& in)
     if (m_boss && m_phase == Phase::Playing) {
         if (const auto landed = m_boss->vulnerable.tryHit(*hit)) {
             bossHurt(landed->damage, hit->box.center());
+            pogo = true;
+        } else if (m_boss->vulnerable.guarded() && h.struckId != hit->attackId
+                   && gamelib::core::overlaps(hit->box, m_boss->vulnerable.hurtbox())) {
+            m_events.push({.kind = EventKind::Deflect, .at = hit->box.center()});
             pogo = true;
         }
     }

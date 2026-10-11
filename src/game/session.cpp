@@ -331,7 +331,9 @@ void Session::playTick(const Input& input)
     // The guardian wakes once the hero is well inside its room.
     if (room().boss >= 0 && !m_boss) {
         const BossDef& def = world().bosses()[static_cast<std::size_t>(room().boss)];
-        if (!m_progress.flags.has(def.flag) && room().bounds.expanded(-3.0f * kTile).contains(m_hero.body.box.center())
+        const gamelib::core::Vec2 lair = m_map.cellCenter(def.cell);
+        if (!m_progress.flags.has(def.flag) && std::abs(m_hero.body.box.center().x - room().bounds.center().x) < room().bounds.width / 2.0f - 3.0f * kTile
+            && std::abs(m_hero.body.box.center().y - lair.y) < kScreenHeight / 2.0f
             && m_hero.body.grounded) {
             wakeBoss();
             return;
@@ -492,10 +494,10 @@ void Session::hurtHero(const int damage, const Rect& source)
     }
 }
 
-void Session::hazardHit()
+void Session::hazardHit(const int damage)
 {
     Hero& h = m_hero;
-    h.health.restore(-1);
+    h.health.restore(-damage);
     h.slash.cancel();
     h.pound.cancel();
     m_events.push({.kind = EventKind::HazardHit, .at = h.body.box.center(), .value = h.health.current});
