@@ -290,11 +290,11 @@ void CavernGame::drawMapScreen(gamelib::draw::DrawList& list, const game::Sessio
                              + "      ITEMS " + std::to_string(s.progress().itemsTaken()) + "/"
                              + std::to_string(game::world().itemCount()) + "  (" + std::to_string(s.progress().completion())
                              + "%)      TIME " + _clock(s.progress().ticks);
-    list.text(info, 960.0f, 1000.0f, {.pixelSize = 5.0f, .color = kText, .align = Align::Center, .shadow = true});
-    list.text("SHRINE", 1500.0f, 930.0f, {.pixelSize = 4.0f, .color = srgb(0x7DFFB0)});
-    list.text("MAP", 1640.0f, 930.0f, {.pixelSize = 4.0f, .color = srgb(0xFFD27A)});
-    list.text("GUARDIAN", 1500.0f, 950.0f, {.pixelSize = 4.0f, .color = kDanger});
-    list.text("ITEM", 1680.0f, 950.0f, {.pixelSize = 4.0f, .color = kGold});
+    list.text(info, 960.0f, 1000.0f, {.pixelSize = 4.0f, .color = kText, .align = Align::Center, .shadow = true});
+    list.text("SHRINE", 1280.0f, 900.0f, {.pixelSize = 3.0f, .color = srgb(0x7DFFB0)});
+    list.text("MAP", 1420.0f, 900.0f, {.pixelSize = 3.0f, .color = srgb(0xFFD27A)});
+    list.text("GUARDIAN", 1520.0f, 900.0f, {.pixelSize = 3.0f, .color = kDanger});
+    list.text("ITEM", 1700.0f, 900.0f, {.pixelSize = 3.0f, .color = kGold});
 }
 
 void CavernGame::drawSlots(gamelib::draw::DrawList& list, const float time) const
@@ -314,12 +314,12 @@ void CavernGame::drawSlots(gamelib::draw::DrawList& list, const float time) cons
         }
         const SlotView v = m_saves.view(i);
         const std::string title = "JOURNEY " + std::to_string(i + 1);
-        list.text(title, row.x + 30.0f, row.y + 18.0f, {.pixelSize = 6.0f, .color = selected ? kGold : kText});
+        list.text(title, row.x + 30.0f, row.y + 12.0f, {.pixelSize = 5.0f, .color = selected ? kGold : kText});
         std::string line = !v.exists ? "NEW JOURNEY" : (v.readable ? v.summary : "DAMAGED - A BACKUP WILL BE TRIED");
         if (m_confirmErase == i) {
             line = "ERASE THIS JOURNEY? PRESS AGAIN";
         }
-        list.text(line, row.x + 30.0f, row.y + 62.0f, {.pixelSize = 4.0f, .color = m_confirmErase == i ? kDanger : kTextDim});
+        list.text(line, row.x + 30.0f, row.y + 60.0f, {.pixelSize = 4.0f, .color = m_confirmErase == i ? kDanger : kTextDim});
     }
     list.text(keyText("{jump} BEGIN    {left} ERASE    {pause} BACK"), 960.0f, 900.0f,
               {.pixelSize = 4.0f, .color = kTextDim.withAlpha(0.7f + 0.3f * std::sin(time * 2.0f)), .align = Align::Center});
@@ -336,7 +336,7 @@ void CavernGame::drawAbilityScene(gamelib::draw::DrawList& list, const game::Ses
     // Rays behind the name.
     for (int i = 0; i < 12; ++i) {
         const float a = static_cast<float>(i) * kPi / 6.0f + time * 0.4f;
-        list.box(Rect::fromCenter({960.0f, 380.0f}, {900.0f * k, 10.0f}), kGold.withAlpha(0.08f * k), {.cornerRadius = 5.0f}, a);
+        list.box(Rect::fromCenter({960.0f, 380.0f}, {1100.0f * k, 46.0f}), kGold.withAlpha(0.05f * k), {.cornerRadius = 23.0f}, a);
     }
     const game::Ability a = s.lastAbility();
     gamelib::draw::drawVectorText(list, game::abilityName(a), 960.0f, 330.0f,

@@ -17,7 +17,7 @@ using gamelib::core::Rect;
 using gamelib::core::TileId;
 using gamelib::core::Vec2;
 
-constexpr float kStationReach = 18.0f;
+constexpr float kStationReach = 26.0f;
 
 Vec2 _feetOf(const Cell cell)
 {
@@ -713,6 +713,14 @@ void Session::grantAll()
         m_progress.abilities.add(static_cast<Ability>(a));
     }
     m_progress.keys = 0x0F;
+}
+
+void Session::debugAbilityScene(const Ability ability)
+{
+    m_progress.abilities.add(ability);
+    m_lastAbility = ability;
+    m_phase = Phase::AbilityGet;
+    m_phaseTicks = 0;
 }
 
 void Session::debugStartIn(const int room)

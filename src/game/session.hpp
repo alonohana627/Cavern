@@ -232,6 +232,8 @@ public:
     // Developer aids: abilities and keys, a start in another room.
     void grantAll();
     void debugStartIn(int room);
+    // The "ability get" scene for `ability`, as if just picked up.
+    void debugAbilityScene(Ability ability);
 
 private:
     void applyFlags();

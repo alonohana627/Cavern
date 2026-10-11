@@ -333,6 +333,16 @@ void CavernGame::startSlot(gamelib::app::App& app, const int slot)
     m_banners.add(std::string{game::areaName(m_session->area())}, std::string{m_session->room().def->name},
                   areaMapColor(m_session->area()).scaled(1.4f), 3.0f);
     m_music.play(app.audio(), areaTune(m_session->area()), 1.0f);
+    // Developer aids: CAVERN_SCENE=ability0..3 shows an "ability get" scene, =ending the ending.
+    if (const char* scene = std::getenv("CAVERN_SCENE")) {
+        const std::string_view name{scene};
+        if (name.starts_with("ability") && name.size() == 8) {
+            m_session->debugAbilityScene(static_cast<game::Ability>(std::clamp(name[7] - '0', 0, game::kAbilityCount - 1)));
+            m_banners.clear();
+        } else if (name == "ending") {
+            startEnding(app);
+        }
+    }
 }
 
 void CavernGame::toTitle(gamelib::app::App& app)
@@ -481,6 +491,7 @@ void CavernGame::react(gamelib::app::App& app, const game::Event& e)
         const auto kind = static_cast<game::ItemKind>(e.value);
         if (kind == game::ItemKind::Ability) {
             m_sfx.queue(q, Sfx::AbilityGet);
+            m_banners.clear();
             m_music.stop(app.audio(), 0.3f);
         } else {
             m_sfx.queue(q, Sfx::Item);
